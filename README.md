@@ -73,6 +73,11 @@ omarchy plugin remove io.github.inxeo.isles --yes
 
 Stock widgets are untouched.
 
+## Contributors
+
+- **Inxeo** — design, taste, and the brief
+- **Grok** ([Grok Build](https://x.ai/)) — implementation
+
 ## License
 
 MIT. Rice Bar remains the original chrome idea; this is a 4.0.3-era way to get a slice of that look.
