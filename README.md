@@ -20,26 +20,10 @@ Isles works on 4.0.3 by staying inside the rules that are left:
 
 No fork of `omarchy.bar`. No writing `bar.transparent` or `bar.foreground`.
 
-## Edges
-
-**Top and bottom** are the happy path. Transparent bar, islands behind the icons, theme-light glyphs.
-
-**Left and right** lay out correctly (islands follow the strip, pills and powerline stack). What goes wrong is **Omarchy**, not Isles: a transparent bar runs `omarchy-bar-text-color`, which samples the **wallpaper along that edge** and picks light or dark text for contrast. A bright side of a photo makes icons almost black, so they look missing on the islands. Double-click the bar to make it solid and the theme’s light text comes back. Isles cannot override that colour — 4.0.3 does not let a third-party widget set `bar.foreground`.
-
-So: use it on the top (or bottom) edge. Side bars work as chrome; the glyphs may not.
-
 ## Install
-
-This repository is **private**. Clone only works if you have access (your GitHub account, or a collaborator invite).
 
 ```bash
 omarchy plugin add https://github.com/Inxeo/omarchy-isles.git --enable
-```
-
-If HTTPS cannot see a private repo, use SSH (and a GitHub account that has been invited):
-
-```bash
-omarchy plugin add git@github.com:Inxeo/omarchy-isles.git --enable
 ```
 
 Put the chip where you want it (often the right cluster):
@@ -52,6 +36,51 @@ The bar should be transparent (`omarchy bar transparent true`, or double-click e
 
 Requires Omarchy 4.0.3+ (Quattro shell plugins).
 
+## Unlock the clock (recommended)
+
+Stock Omarchy pins the clock to the **middle of the screen** (`bar.centerAnchor` is `omarchy.clock`). Isles still paints in that mode, but the center island will not pack and re-center as a group when widgets appear and vanish (Plexamp, hover icons, and so on). The clock stays glued; the huddle cannot breathe as one piece.
+
+For the intended look — one island per section that grows, shrinks, and stays centered on the cluster — clear the anchor in `~/.config/omarchy/shell.json`:
+
+```json
+"bar": {
+  "centerAnchor": ""
+}
+```
+
+The file hot-reloads. The clock then sits in the middle of the **center cluster**, not the display. You do not have to do this for Isles to load; you do if you want the breathing dock.
+
+## Left and right bar edges
+
+Isles **does** lay out on left and right: islands follow the strip, pills and powerline stack along it.
+
+What does **not** follow is icon colour. That is Omarchy, not Isles. A transparent bar runs `omarchy-bar-text-color`, which samples the **wallpaper along that edge** and picks the theme’s light text or the dark contrast colour. A bright side of a photo makes glyphs almost black, so they look missing on the islands.
+
+- **Top / bottom** — usually the happy path (theme-light icons on the chrome).
+- **Left / right** — chrome is in the right place; glyphs may go dark. Double-click the bar to make it solid and the light text comes back.
+
+Isles cannot override `bar.foreground` (4.0.3 does not allow that from a third-party widget). Prefer top or bottom if you care about the screenshots below looking like your machine.
+
+## Examples
+
+Settings are what was used for each shot (Look, Stroke, and the sliders that matter). Wallpaper is yours.
+
+| Preview | Settings |
+|---|---|
+| ![Cluster, All, pill](examples/cluster-all-pill.png) | **Cluster** · Stroke **All** · Radius toward **pill** · Fill high · Stroke width 1–2 |
+| ![Cluster, top and bottom](examples/cluster-tb.png) | **Cluster** · Stroke **T+B** · Radius lower (squarer) · Fill medium |
+| ![Cluster, fill only](examples/cluster-fill-only.png) | **Cluster** · Stroke width **0** (no outline) · Radius pill · Fill medium |
+| ![Cluster, soft fill](examples/cluster-soft-fill.png) | **Cluster** · Stroke **None** / width **0** · Radius pill · Fill a little higher |
+| ![Cluster, All, space](examples/cluster-all-space.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
+| ![Cluster, All, purple](examples/cluster-all-purple.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
+| ![Cluster, Ends](examples/cluster-ends.png) | **Cluster** · Stroke **Ends** (chevrons) · Radius unused · Fill high |
+| ![Cluster, Ends, partial](examples/cluster-ends-partial.png) | **Cluster** · Stroke **Ends** · same as above, fewer widgets in the huddle |
+| ![Cluster, All, green](examples/cluster-all-green.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
+| ![Glow, All](examples/glow-all.png) | **Glow** · Stroke **All** · Radius pill · Fill high (soft bloom around each cluster) |
+| ![Cluster, All, bokeh](examples/cluster-all-bokeh.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
+
+Stroke **All / Top / Bottom / T+B / Sides / Ends** applies to Cluster, Pills, Rail, and Glow. Width **0** is no stroke. Fill and stroke have separate opacity sliders. Pills, Rail, Power, and Brackets are in the panel too; the shots above are the cluster/glow set.
+
 ## Looks
 
 | Look | What it paints |
@@ -62,8 +91,6 @@ Requires Omarchy 4.0.3+ (Quattro shell plugins).
 | Power | Chevron segments per icon, grouped by section |
 | Brackets | Corner ticks (optional fill) |
 | Glow | Cluster islands with a soft bloom |
-
-Stroke (All, Top, Bottom, T+B, Sides, Ends) applies to Cluster, Pills, Rail, and Glow. Width `0` is no stroke. Fill and stroke have separate opacity sliders.
 
 ## Remove
 
