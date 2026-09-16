@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Ui
+import "IslesSettings.js" as IslesSettings
 
 Panel {
   id: root
@@ -16,40 +17,18 @@ Panel {
   property var hostWidget: null
 
   readonly property color fg: bar ? bar.foreground : Color.foreground
-  readonly property bool chrome: setting("chrome", true) !== false
-  readonly property int opacityPct: Number(setting("opacity", 62))
-  readonly property int strokeOpacityPct: {
-    var n = Number(setting("strokeOpacity", 100))
-    return isFinite(n) ? n : 100
-  }
-  readonly property int padding: Number(setting("padding", 8))
-  readonly property int radius: Number(setting("radius", 100))
-  readonly property string look: {
-    var l = String(setting("look", "cluster") || "cluster")
-    if (l === "pills" || l === "rail" || l === "power" || l === "brackets" || l === "glow")
-      return l
-    return "cluster"
-  }
-  readonly property bool lookLocksRadius: look === "power" || look === "brackets" || borderStyle === "ends"
-  readonly property bool lookLocksBorder: look === "power" || look === "brackets"
-  readonly property int strokeWidthPx: {
-    var n = Number(setting("strokeWidth", -1))
-    if (isFinite(n) && n >= 0) return Math.max(0, Math.min(5, Math.round(n)))
-    var b = setting("border", "all")
-    if (b === false || b === "false" || b === "none") return 0
-    return 1
-  }
-  readonly property bool hasDecoration: strokeWidthPx > 0
-  readonly property string borderStyle: {
-    var b = setting("border", "all")
-    if (b === true || b === "true" || b === "all") return "all"
-    if (b === "bottom") return "bottom"
-    if (b === "top") return "top"
-    if (b === "horiz") return "horiz"
-    if (b === "sides") return "sides"
-    if (b === "ends") return "ends"
-    return "all"
-  }
+  readonly property var cfg: IslesSettings.fromSettings(settings)
+  readonly property bool chrome: cfg.chrome
+  readonly property int opacityPct: cfg.opacity
+  readonly property int strokeOpacityPct: cfg.strokeOpacity
+  readonly property int padding: cfg.padding
+  readonly property int radius: cfg.radius
+  readonly property string look: cfg.look
+  readonly property bool lookLocksRadius: cfg.lookLocksRadius
+  readonly property bool lookLocksBorder: cfg.lookLocksBorder
+  readonly property int strokeWidthPx: cfg.strokeWidth
+  readonly property bool hasDecoration: cfg.hasDecoration
+  readonly property string borderStyle: cfg.border
 
   function persist(key, value) {
     var args = ["omarchy", "bar", "set", "io.github.inxeo.isles", key]

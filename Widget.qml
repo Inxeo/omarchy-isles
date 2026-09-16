@@ -4,6 +4,7 @@ import qs.Commons
 import qs.Ui
 import "HuddleState.js" as HuddleState
 import "HuddleDraw.js" as HuddleDraw
+import "IslesSettings.js" as IslesSettings
 
 BarWidget {
   id: root
@@ -18,7 +19,10 @@ BarWidget {
 
   property var panelItem: null
   property var drawList: []
+  property string lastDrawKey: ""
 
+  readonly property var cfg: IslesSettings.fromSettings(settings)
+  readonly property bool chrome: cfg.chrome
   readonly property bool edgeVertical: !!(bar && bar.vertical)
   readonly property int span: {
     if (bar && Number(bar.barSize) > 0) return Number(bar.barSize)
@@ -29,38 +33,6 @@ BarWidget {
     return w && w.contentItem ? w.contentItem : null
   }
 
-  readonly property bool chrome: setting("chrome", true) !== false
-  readonly property int opacityPct: Number(setting("opacity", 62))
-  readonly property int strokeOpacityPct: {
-    var n = Number(setting("strokeOpacity", 100))
-    return isFinite(n) ? n : 100
-  }
-  readonly property int padding: Number(setting("padding", 8))
-  readonly property int radius: Number(setting("radius", 100))
-  readonly property string look: {
-    var l = String(setting("look", "cluster") || "cluster")
-    if (l === "pills" || l === "rail" || l === "power" || l === "brackets" || l === "glow")
-      return l
-    return "cluster"
-  }
-  readonly property int strokeWidthPx: {
-    var n = Number(setting("strokeWidth", -1))
-    if (isFinite(n) && n >= 0) return Math.max(0, Math.min(5, Math.round(n)))
-    var b = setting("border", "all")
-    if (b === false || b === "false" || b === "none") return 0
-    return 1
-  }
-  readonly property string borderStyle: {
-    var b = setting("border", "all")
-    if (b === true || b === "true" || b === "all") return "all"
-    if (b === "bottom") return "bottom"
-    if (b === "top") return "top"
-    if (b === "horiz") return "horiz"
-    if (b === "sides") return "sides"
-    if (b === "ends") return "ends"
-    return "all"
-  }
-
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
@@ -69,49 +41,98 @@ BarWidget {
   function findBarRoot() {
     var window = root.QsWindow ? root.QsWindow.window : null
     var item = window && window.contentItem ? window.contentItem : null
+    if (!item) return null
     var vertical = !!(root.bar && root.bar.vertical)
-    var span = item ? (vertical ? Number(item.height) : Number(item.width)) : 0
+    var alongSpan = vertical ? Number(item.height) : Number(item.width)
     var p = parent
     var best = null
     while (p) {
       var along = vertical ? Number(p.height) : Number(p.width)
-      if (span > 0 && along > span * 0.9) best = p
+      if (alongSpan > 0 && along > alongSpan * 0.9) best = p
       p = p.parent
     }
     return best
   }
 
   function gatherSlots(item, acc) {
-    if (!item || item.visible === false) return
-    var region = item.region !== undefined ? String(item.region) : ""
-    var name = item.moduleName !== undefined ? String(item.moduleName) : ""
+    if (!item) return
+    try {
+      if (item.visible === false) return
+    } catch (e) {
+      return
+    }
+    var region = ""
+    var name = ""
+    try {
+      if (item.region !== undefined) region = String(item.region)
+      if (item.moduleName !== undefined) name = String(item.moduleName)
+    } catch (e) {}
     if ((region === "left" || region === "center" || region === "right") && name)
       acc.push(item)
-    var kids = item.children
+    var kids
+    try {
+      kids = item.children
+    } catch (e) {
+      return
+    }
     if (!kids) return
     for (var i = 0; i < kids.length; i++) gatherSlots(kids[i], acc)
   }
 
-  function slotInkWidth(slot) {
-    if (!slot || slot.visible === false) return 0
-    var item = slot.activeItem
-    if (item && item.visible === false) return 0
-    if (item) {
-      var iw = Number(item.implicitWidth) || 0
-      if (iw > 0) return iw
+  function slotInkSize(slot) {
+    var empty = { w: 0, h: 0 }
+    if (!slot) return empty
+    try {
+      if (slot.visible === false) return empty
+    } catch (e) {
+      return empty
     }
-    return Number(slot.width) || 0
+    try {
+      if (slot.activeItem !== undefined && slot.activeItem && slot.activeItem.visible === false)
+        return empty
+    } catch (e) {}
+
+    var w = 0
+    var h = 0
+    try { w = Number(slot.width) || 0 } catch (e) {}
+    try { h = Number(slot.height) || 0 } catch (e) {}
+    if (w <= 0) {
+      try {
+        var item = slot.activeItem
+        if (item) w = Number(item.width) || Number(item.implicitWidth) || 0
+      } catch (e) {}
+    }
+    if (h <= 0) {
+      try {
+        var itemH = slot.activeItem
+        if (itemH) h = Number(itemH.height) || Number(itemH.implicitHeight) || 0
+      } catch (e) {}
+    }
+    return { w: w, h: h }
   }
 
   function measureHuddle() {
-    var window = root.QsWindow ? root.QsWindow.window : null
-    var screenName = window && window.screen ? String(window.screen.name) : ""
-    if (!window || !window.contentItem || !chrome || !screenName) {
-      if (screenName) HuddleState.report(screenName, null)
+    if (!root.chrome) {
+      if (root.drawList.length) {
+        root.drawList = []
+        root.lastDrawKey = ""
+      }
+      measureTimer.interval = 1000
       return
     }
 
+    var window = root.QsWindow ? root.QsWindow.window : null
+    if (!window || !window.contentItem) return
+
     var survey = findBarRoot()
+    if (!survey) {
+      if (root.drawList.length) {
+        root.drawList = []
+        root.lastDrawKey = ""
+      }
+      return
+    }
+
     var slots = []
     gatherSlots(survey, slots)
 
@@ -122,32 +143,33 @@ BarWidget {
     }
     var order = ["left", "center", "right"]
     var slotRects = []
+    var conf = root.cfg
 
     for (var i = 0; i < slots.length; i++) {
       var slot = slots[i]
-      var region = String(slot.region || "")
+      var region = ""
+      try { region = String(slot.region || "") } catch (e) { continue }
       var box = boxes[region]
       if (!box) continue
-      var w = slotInkWidth(slot)
-      if (w <= 0) continue
-      var h = Number(slot.height) || Number(slot.implicitHeight) || 0
-      if (h <= 0) h = root.barSize
+      var ink = slotInkSize(slot)
+      if (ink.w <= 0 || ink.h <= 0) continue
       var origin
       try {
         origin = slot.mapToItem(window.contentItem, 0, 0)
       } catch (e) {
         continue
       }
+      if (!origin) continue
       box.found = true
       box.minX = Math.min(box.minX, origin.x)
       box.minY = Math.min(box.minY, origin.y)
-      box.maxX = Math.max(box.maxX, origin.x + w)
-      box.maxY = Math.max(box.maxY, origin.y + h)
+      box.maxX = Math.max(box.maxX, origin.x + ink.w)
+      box.maxY = Math.max(box.maxY, origin.y + ink.h)
       slotRects.push({
         x: Math.round(origin.x),
         y: Math.round(origin.y),
-        width: Math.round(w),
-        height: Math.round(h),
+        width: Math.round(ink.w),
+        height: Math.round(ink.h),
         region: region
       })
     }
@@ -166,19 +188,27 @@ BarWidget {
     }
 
     var payload = {
-      look: look,
-      border: borderStyle,
-      padding: padding,
-      radius: radius,
-      opacity: opacityPct,
-      strokeOpacity: strokeOpacityPct,
-      strokeWidth: strokeWidthPx,
+      look: conf.look,
+      border: conf.border,
+      padding: conf.padding,
+      radius: conf.radius,
+      opacity: conf.opacity,
+      strokeOpacity: conf.strokeOpacity,
+      strokeWidth: conf.strokeWidth,
       barWidth: Math.round(Number(window.contentItem.width) || 0),
       clusters: clusters,
       slots: slotRects
     }
-    HuddleState.report(screenName, payload)
-    drawList = HuddleDraw.build(payload, window.contentItem.width, window.contentItem.height, span, edgeVertical)
+    var key = HuddleState.keyOf(payload)
+    if (key === root.lastDrawKey) {
+      if (measureTimer.interval === 50)
+        burstSettle.restart()
+      return
+    }
+    root.lastDrawKey = key
+    root.drawList = HuddleDraw.build(payload, window.contentItem.width, window.contentItem.height, span, edgeVertical)
+    measureTimer.interval = 50
+    burstSettle.restart()
   }
 
   function injectPanel() {
@@ -197,20 +227,34 @@ BarWidget {
     injectPanel()
     Qt.callLater(measureHuddle)
   }
-  onSettingsChanged: injectPanel()
+  onSettingsChanged: {
+    injectPanel()
+    root.lastDrawKey = ""
+    Qt.callLater(measureHuddle)
+  }
+  onChromeChanged: {
+    root.lastDrawKey = ""
+    Qt.callLater(measureHuddle)
+  }
 
   Timer {
-    interval: 50
+    id: measureTimer
+    interval: 250
     running: true
     repeat: true
     onTriggered: root.measureHuddle()
+  }
+
+  Timer {
+    id: burstSettle
+    interval: 400
+    onTriggered: measureTimer.interval = 250
   }
 
   Loader {
     id: panelLoader
     active: true
     source: Qt.resolvedUrl("Panel.qml")
-    // bump: stroke width 0–5px, None is 0
     visible: false
     onLoaded: {
       root.injectPanel()
