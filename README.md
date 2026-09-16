@@ -34,7 +34,7 @@ omarchy bar move io.github.inxeo.isles --section right
 
 The bar should be transparent (`omarchy bar transparent true`, or double-click empty bar) so the islands show through.
 
-Requires Omarchy 4.0.3+ (Quattro shell plugins).
+Tested on **Omarchy 4.0.4-1** (Quattro shell). The plugin isolation this works around landed in 4.0.3. Later releases may change how bar slots are parented; if islands vanish after an update, that walk is the first place to look.
 
 ## Unlock the clock (recommended)
 
