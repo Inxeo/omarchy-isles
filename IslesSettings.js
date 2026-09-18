@@ -1,20 +1,33 @@
 .pragma library
 
+var defaults = {chrome: true, look: "glow", border: "bottom", opacity: 66, strokeOpacity: 58, strokeWidth: 0, padding: 1, radius: 100}
+
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+}
+
+function numeric(value) {
+  if (typeof value !== "number" && typeof value !== "string") return NaN
+  if (typeof value === "string" && value.trim() === "") return NaN
+  var n = Number(value)
+  return isFinite(n) ? n : NaN
+}
+
 function clampInt(n, min, max, fallback) {
-  n = Number(n)
+  n = numeric(n)
   if (!isFinite(n)) return fallback
   return Math.max(min, Math.min(max, Math.round(n)))
 }
 
 function lookOf(raw) {
-  var l = String(raw || "glow")
+  var l = String(raw || defaults.look)
   if (l === "cluster" || l === "pills" || l === "rail" || l === "power" || l === "brackets" || l === "glow")
     return l
-  return "glow"
+  return defaults.look
 }
 
 function borderOf(raw) {
-  if (raw === undefined) return "bottom"
+  if (raw === undefined || raw === null) return defaults.border
   if (raw === true || raw === "true" || raw === "all") return "all"
   if (raw === "bottom") return "bottom"
   if (raw === "top") return "top"
@@ -25,15 +38,11 @@ function borderOf(raw) {
 }
 
 function strokeWidthOf(settings) {
-  var n = Number(settings && settings.strokeWidth)
-  if (isFinite(n) && n >= 0) return clampInt(n, 0, 5, 1)
-  var b = settings ? settings.border : undefined
-  if (b === false || b === "false" || b === "none") return 0
-  return 0
+  return clampInt(settings && settings.strokeWidth, 0, 5, defaults.strokeWidth)
 }
 
 function fromSettings(settings) {
-  var s = settings && typeof settings === "object" ? settings : {}
+  var s = isObject(settings) ? settings : {}
   var look = lookOf(s.look)
   var border = borderOf(s.border)
   var strokeWidth = strokeWidthOf(s)
@@ -41,10 +50,10 @@ function fromSettings(settings) {
     chrome: s.chrome !== false,
     look: look,
     border: border,
-    opacity: clampInt(s.opacity, 0, 100, 66),
-    strokeOpacity: clampInt(s.strokeOpacity, 0, 100, 58),
-    padding: clampInt(s.padding, 0, 20, 1),
-    radius: clampInt(s.radius, 0, 100, 100),
+    opacity: clampInt(s.opacity, 0, 100, defaults.opacity),
+    strokeOpacity: clampInt(s.strokeOpacity, 0, 100, defaults.strokeOpacity),
+    padding: clampInt(s.padding, 0, 20, defaults.padding),
+    radius: clampInt(s.radius, 0, 100, defaults.radius),
     strokeWidth: strokeWidth,
     lookLocksRadius: look === "power" || look === "brackets" || border === "ends",
     lookLocksBorder: look === "power" || look === "brackets",

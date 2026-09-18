@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.inxeo.isles",
   "name": "Isles",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "Inxeo",
   "license": "MIT",
   "description": "Breathing islands behind the stock Omarchy bar. Owns the chrome, not the widgets.",

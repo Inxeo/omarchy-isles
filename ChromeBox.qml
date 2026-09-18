@@ -102,25 +102,26 @@ Item {
       joinStyle: ShapePath.MiterJoin
       startX: box.vertical ? 0 : box.tip
       startY: box.vertical ? box.tip : 0
+      // Follow the perimeter in both orientations, including the end tips.
       PathLine {
-        x: box.vertical ? box.width : box.width - box.tip
-        y: box.vertical ? box.tip : 0
+        x: box.vertical ? box.width / 2 : box.width - box.tip
+        y: 0
       }
       PathLine {
-        x: box.vertical ? box.width / 2 : box.width
-        y: box.vertical ? 0 : box.height / 2
+        x: box.width
+        y: box.vertical ? box.tip : box.height / 2
       }
       PathLine {
         x: box.vertical ? box.width : box.width - box.tip
         y: box.vertical ? box.height - box.tip : box.height
       }
       PathLine {
-        x: box.vertical ? 0 : box.tip
-        y: box.vertical ? box.height - box.tip : box.height
+        x: box.vertical ? box.width / 2 : box.tip
+        y: box.height
       }
       PathLine {
-        x: box.vertical ? box.width / 2 : 0
-        y: box.vertical ? box.height : box.height / 2
+        x: 0
+        y: box.vertical ? box.height - box.tip : box.height / 2
       }
       PathLine {
         x: box.vertical ? 0 : box.tip

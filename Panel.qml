@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 import qs.Ui
 import "IslesSettings.js" as IslesSettings
@@ -35,39 +34,23 @@ Panel {
   readonly property var savedPresets: Presets.saved(settings ? settings.savedPresets : null)
   readonly property var presets: Presets.entries(savedPresets)
   readonly property string selectedPreset: Presets.matching(settings, presets)
+  readonly property var selectedPersonalPreset: {
+    var index = Number(selectedPreset)
+    return isFinite(index) && index >= Presets.builtins().length ? presets[index] || null : null
+  }
   readonly property var presetOptions: {
     var options = presets.map(function(p, i) {
-      return { value: String(i), label: p.name + (i >= 6 ? " · Saved" : "") }
+      return { value: String(i), label: p.name }
     })
     if (selectedPreset === "custom") options.unshift({ value: "custom", label: "Custom" })
     return options
   }
-  property var writeQueue: []
-  property bool saving: false
+  readonly property bool saving: writer.busy
   property string statusMessage: ""
-  property string successMessage: ""
-
   function writeSettings(changes, message) {
     if (saving) return
     statusMessage = ""
-    successMessage = message || ""
-    writeQueue = Object.keys(changes).map(function(key) {
-      return ["omarchy", "bar", "set", "io.github.inxeo.isles", key,
-              JSON.stringify(changes[key]), "--json"]
-    })
-    saving = true
-    nextWrite()
-  }
-
-  function nextWrite() {
-    if (!writeQueue.length) {
-      saving = false
-      statusMessage = successMessage
-      return
-    }
-    writer.command = writeQueue[0]
-    writeQueue = writeQueue.slice(1)
-    writer.running = true
+    writer.write(changes, message)
   }
 
   function persist(key, value) {
@@ -86,25 +69,29 @@ Panel {
     }
   }
 
-  function savePreset() {
+  function savePreset(name) {
     if (saving) return
-    var result = Presets.save(savedPresets, presetName.text, settings)
+    if (name === undefined) name = presetName.text
+    var result = Presets.save(settings ? settings.savedPresets : undefined, name, settings)
     if (result.error) { statusMessage = result.error; return }
-    var name = Presets.nameOf(presetName.text)
+    name = Presets.nameOf(name)
     writeSettings({ savedPresets: result.presets, presetName: name }, "Saved " + name + ".")
   }
 
-  Process {
+  function deletePreset() {
+    if (saving || !selectedPersonalPreset) return
+    var name = selectedPersonalPreset.name
+    var result = Presets.remove(settings ? settings.savedPresets : undefined, name)
+    if (result.error) { statusMessage = result.error; return }
+    // Remove the saved entry, not the currently applied appearance.
+    writeSettings({ savedPresets: result.presets, presetName: "" }, "Deleted " + name + ".")
+  }
+
+  SettingsWriter {
     id: writer
-    onExited: function(exitCode, exitStatus) {
-      if (exitCode !== 0 || exitStatus !== 0) {
-        root.writeQueue = []
-        root.saving = false
-        root.statusMessage = "Could not save all settings. Please try again."
-      } else {
-        Qt.callLater(root.nextWrite)
-      }
-    }
+    shellApi: root.bar ? root.bar.shell : null
+    currentSettings: root.settings
+    onCompleted: function(success, message) { root.statusMessage = message }
   }
 
   component Hairline: Rectangle {
@@ -171,14 +158,28 @@ Panel {
 
         FieldLabel { valueText: "Preset" }
 
-        Dropdown {
-          id: presetDropdown
+        RowLayout {
           Layout.fillWidth: true
-          options: root.presetOptions
-          foreground: root.fg
-          fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
-          onChanged: function(v) { root.applyPreset(v) }
-          Binding { target: presetDropdown; property: "value"; value: root.selectedPreset }
+          spacing: Style.space(6)
+          Dropdown {
+            id: presetDropdown
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: root.presetOptions
+            foreground: root.fg
+            fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+            onChanged: function(v) { root.applyPreset(v) }
+            Binding { target: presetDropdown; property: "value"; value: root.selectedPreset }
+          }
+          Button {
+            visible: root.selectedPersonalPreset !== null
+            text: "Delete"
+            tooltipText: root.selectedPersonalPreset ? "Delete " + root.selectedPersonalPreset.name : ""
+            bordered: true
+            focusable: true
+            foreground: root.fg
+            onClicked: root.deletePreset()
+          }
         }
 
         RowLayout {

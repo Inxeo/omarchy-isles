@@ -4,6 +4,19 @@ Breathing islands behind the stock [Omarchy](https://omarchy.org/) bar. The bar 
 
 One chip on the bar opens the panel: looks (cluster, pills, rail, powerline, brackets, glow), stroke style and width, fill vs stroke opacity, padding, and radius.
 
+## What's new in 0.5.0
+
+This is a stabilisation update with the same six presets and appearance controls.
+
+- Presets apply in one scoped Omarchy settings update, with disk verification and recovery when saving fails.
+- Vertical Ends outlines no longer cross themselves. Geometry caches follow bar size, orientation, fractional dimensions, and surface replacement.
+- Shapes at the screen edge are clipped without being shifted. Only the selected renderer is instantiated for each island.
+- Saving preset metadata does not rebuild the islands; disabling islands stops their measurement timer.
+- Invalid and future-format saved preset records are preserved. They are omitted from the dropdown until supported, and cannot be accidentally overwritten by name.
+- Slot discovery is isolated in a compatibility adapter, with automatic retries and a one-time warning if it cannot find compatible slots.
+
+See [the changelog](CHANGELOG.md) for validation details and remaining release checks.
+
 ## What's new in 0.4.0
 
 - Six built-in presets and a dropdown, with **Glowy** as the default for new installs.
@@ -29,11 +42,13 @@ Choose a preset from the dropdown at the top of the Isles panel, then fine-tune 
 
 Presets use your current theme's colours. Glowy retains 58% stroke opacity for when you turn its stroke width up; its default width is zero.
 
-To save your own, adjust the controls, enter a name, and click **Save** (or press Enter). Personal presets appear in the same dropdown with a **Saved** label. Enter an existing personal preset's name to **Update** it. Built-in names are reserved. Names can contain up to 40 characters.
+To save your own, adjust the controls, enter a name, and click **Save** (or press Enter). Personal presets appear in the same dropdown using exactly the name you entered. Enter an existing personal preset's name to **Update** it. Built-in names are reserved. Names can contain up to 40 characters.
+
+To delete a personal preset, select it in the dropdown and click **Delete**. This removes the saved preset while leaving your current bar appearance in place. The six built-in presets are always available and cannot be deleted.
 
 The dropdown shows **Custom** when your settings no longer match a preset. Presets save appearance settings; the master islands toggle stays independent. Personal presets are stored in this widget's `savedPresets` setting in `~/.config/omarchy/shell.json`, so they survive shell restarts and plugin updates. Existing explicit appearance settings are preserved.
 
-The panel scrolls when needed on smaller displays. Settings writes are applied sequentially through `omarchy bar set`; the panel reports a failure if a write cannot complete.
+The panel scrolls when needed on smaller displays. Settings are saved together through Omarchy’s scoped `updateEntryInline` API and checked against `shell.json` before success is reported. If persistence cannot be verified, Isles attempts to restore the previous values without overwriting newer edits. An unsupported host reports an error without changing settings.
 
 ## A nod to Rice Bar
 
@@ -43,11 +58,11 @@ Rice Bar did that by talking to the live bar object — slot geometry, transpare
 
 On **4.0.3** the shell stopped injecting that object into third-party widgets. Third-party code gets a postcard (size, edge, colours) and must not mutate the host. Rice Bar’s overlay still maps; it can no longer measure widgets or restyle the bar, so the islands go blank.
 
-Isles works on 4.0.3 by staying inside the rules that are left:
+Isles keeps that approach on the tested Omarchy release:
 
 - A bar-widget already sits in the shared QML scene. It walks neighbouring slots for size and visibility (the postcard does not include that tape measure).
 - Chrome is drawn **in the bar window, under the widgets**, not as a second layer-shell surface stacked on top.
-- Settings are this plugin’s own keys, saved with `omarchy bar set` — the same public CLI the rest of the shell uses.
+- Settings are this plugin’s own keys, saved through its scoped shell API; other plugins and the host bar are not modified.
 
 No fork of `omarchy.bar`. No writing `bar.transparent` or `bar.foreground`.
 
@@ -139,8 +154,12 @@ Stock widgets are untouched.
 
 ## License
 
-MIT. Rice Bar remains the original chrome idea; this is a 4.0.3-era way to get a slice of that look.
+MIT. Rice Bar remains the original chrome idea; this is a 4.0.3-era and 4.0.4-1 way to get a slice of that look.
 
 ## Development checks
 
-Run `node tests/presets.cjs` for preset defaults, saving/updating, matching, persistence format, and drawing regression checks. These checks do not modify the running bar.
+Run `node tests/presets.cjs` for settings, presets, geometry, caching, and recovery-planning checks.
+
+Run `python3 tests/run-integration.py` in an Omarchy Wayland session for the actual QML components, including save/update, failure recovery, renderer selection, and persistence across a separate Quickshell process restart. It uses a temporary home and configuration, a mock scoped shell API, and transparent noninteractive test surfaces. It does not alter your bar settings or display configuration.
+
+The automated two-surface test checks independent widget instances on one physical screen; it does not replace real multi-monitor/hotplug testing. Visual acceptance on the target display, small-screen scrolling, and physical fractional-scaling/hotplug checks remain part of the v1.0 release checklist.

@@ -1,22 +1,9 @@
 .pragma library
 
-var huddles = {}
-var serial = 0
-
-function report(screenName, payload) {
-  var key = String(screenName || "")
-  if (!key) return
-  huddles[key] = payload && typeof payload === "object" ? payload : null
-  serial++
-}
-
-function forScreen(screenName) {
-  return huddles[String(screenName || "")] || null
-}
-
-function keyOf(payload) {
+function keyOf(payload, winW, winH, span, edgeVertical) {
   if (!payload) return ""
-  var s = [payload.look, payload.border, payload.padding, payload.radius, payload.opacity, payload.strokeOpacity, payload.strokeWidth, payload.barWidth].join(",")
+  // Keep the exact geometry inputs passed to HuddleDraw.build in the key.
+  var s = [payload.look, payload.border, payload.padding, payload.radius, payload.opacity, payload.strokeOpacity, payload.strokeWidth, winW, winH, span, edgeVertical].join(",")
   var clusters = payload.clusters || []
   var slots = payload.slots || []
   for (var i = 0; i < clusters.length; i++) {

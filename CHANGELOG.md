@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.5.0 — unreleased
+
+### Personal presets
+
+- Add a Delete button for the selected personal preset. Built-in presets are protected; deletion preserves the current appearance and other saved records.
+- Show personal preset names without an added Saved suffix.
+
+### Reliability
+
+- Apply settings in one scoped host API call instead of a sequence of CLI processes. Skip unchanged values, verify live and persisted results, and attempt bounded recovery after save failures without overwriting concurrent edits.
+- Preserve unsupported/malformed saved preset records and extension fields on updates; reject ambiguous name collisions. Accept legacy valid records and version new records.
+- Treat nulls, booleans, arrays, and empty strings as invalid numeric settings rather than zero.
+- Correct the vertical Ends perimeter and preserve original shape bounds when clipping at the bar surface.
+- Include all geometry inputs in redraw keys and invalidate on surface replacement.
+
+### Efficiency and compatibility
+
+- Instantiate only the selected island renderer. Keep drawing objects for metadata-only changes and stop measurement while islands are disabled.
+- Isolate scene-tree assumptions in BarGeometry.js. Validate host slots, stop scanning at each slot, retry layout discovery, and warn once per discovery failure.
+- Share the Glowy defaults between settings parsing and built-in presets; retain checks against the required manifest defaults. Remove unused shared-state storage.
+
+### Validation
+
+- JavaScript regression checks cover invalid data, lossless updates, cache invalidation, non-crossing outlines, edge bounds, discovery, and recovery planning.
+- Reproducible QML integration checks cover host rejection/exception, disk failure, restoration/retry, concurrent edits, real panel Save/Update actions, renderer selection for all presets in both orientations, metadata-only changes, widget visibility changes, and preset persistence across an isolated process restart.
+- Tests use temporary settings and a mock host API. The maintainer reports successful testing on both screens and acceptance of the Delete action. Deletion is also covered by automated checks, including persistence across restart. One final maintainer review is planned before release; physical hotplug testing remains pending.
+- CPU/GPU improvements have not been benchmarked.
+
 ## 0.4.0
 
 ### Added

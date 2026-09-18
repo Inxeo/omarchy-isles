@@ -15,10 +15,13 @@ function build(payload, winW, winH, span, edgeVertical) {
   var thick = Math.max(0, span - inset * 2)
 
   function boxItem(kind, x, y, w, h, extra) {
+    if (![x, y, w, h].every(function(n) { return isFinite(n) })) return
     var it = {
       kind: kind,
-      x: Math.max(0, x),
-      y: Math.max(0, y),
+      // Keep the shape's original bounds. The bar-surface clip cuts off the
+      // overflow (including strokes/glow) without shifting or shrinking it.
+      x: x,
+      y: y,
       width: Math.max(0, w),
       height: Math.max(0, h),
       border: border,

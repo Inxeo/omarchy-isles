@@ -3,6 +3,7 @@ import Quickshell
 import qs.Commons
 import qs.Ui
 import "HuddleState.js" as HuddleState
+import "BarGeometry.js" as BarGeometry
 import "HuddleDraw.js" as HuddleDraw
 import "IslesSettings.js" as IslesSettings
 
@@ -36,47 +37,23 @@ BarWidget {
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
-  // Walk to the full-width bar surface, then union ink per section so one
-  // chip (anywhere) can chrome left, center, and right.
-  function findBarRoot() {
-    var window = root.QsWindow ? root.QsWindow.window : null
-    var item = window && window.contentItem ? window.contentItem : null
-    if (!item) return null
-    var vertical = !!(root.bar && root.bar.vertical)
-    var alongSpan = vertical ? Number(item.height) : Number(item.width)
-    var p = parent
-    var best = null
-    while (p) {
-      var along = vertical ? Number(p.height) : Number(p.width)
-      if (alongSpan > 0 && along > alongSpan * 0.9) best = p
-      p = p.parent
-    }
-    return best
-  }
+  property int discoveryMisses: 0
+  property bool discoveryWarning: false
 
-  function gatherSlots(item, acc) {
-    if (!item) return
-    try {
-      if (item.visible === false) return
-    } catch (e) {
-      return
+  function discoverSlots() {
+    var survey = BarGeometry.findSurfaceRoot(parent, root.barLayer, root.edgeVertical)
+    var slots = BarGeometry.slotsIn(survey)
+    if (!slots.length) {
+      discoveryMisses++
+      if (discoveryMisses >= 4 && !discoveryWarning) {
+        console.warn("Isles: no compatible bar slots found; islands are hidden while discovery retries. Check Omarchy compatibility.")
+        discoveryWarning = true
+      }
+    } else {
+      discoveryMisses = 0
+      discoveryWarning = false
     }
-    var region = ""
-    var name = ""
-    try {
-      if (item.region !== undefined) region = String(item.region)
-      if (item.moduleName !== undefined) name = String(item.moduleName)
-    } catch (e) {}
-    if ((region === "left" || region === "center" || region === "right") && name)
-      acc.push(item)
-    var kids
-    try {
-      kids = item.children
-    } catch (e) {
-      return
-    }
-    if (!kids) return
-    for (var i = 0; i < kids.length; i++) gatherSlots(kids[i], acc)
+    return slots
   }
 
   function slotInkSize(slot) {
@@ -117,24 +94,19 @@ BarWidget {
         root.drawList = []
         root.lastDrawKey = ""
       }
-      measureTimer.interval = 1000
+      burstSettle.stop()
       return
     }
 
     var window = root.QsWindow ? root.QsWindow.window : null
     if (!window || !window.contentItem) return
 
-    var survey = findBarRoot()
-    if (!survey) {
-      if (root.drawList.length) {
-        root.drawList = []
-        root.lastDrawKey = ""
-      }
+    var slots = discoverSlots()
+    if (!slots.length) {
+      root.drawList = []
+      root.lastDrawKey = ""
       return
     }
-
-    var slots = []
-    gatherSlots(survey, slots)
 
     var boxes = {
       left: { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, found: false },
@@ -195,11 +167,10 @@ BarWidget {
       opacity: conf.opacity,
       strokeOpacity: conf.strokeOpacity,
       strokeWidth: conf.strokeWidth,
-      barWidth: Math.round(Number(window.contentItem.width) || 0),
       clusters: clusters,
       slots: slotRects
     }
-    var key = HuddleState.keyOf(payload)
+    var key = HuddleState.keyOf(payload, window.contentItem.width, window.contentItem.height, span, edgeVertical)
     if (key === root.lastDrawKey) {
       return
     }
@@ -221,13 +192,21 @@ BarWidget {
 
   Component.onCompleted: measureHuddle()
   onParentChanged: Qt.callLater(measureHuddle)
+  onSpanChanged: Qt.callLater(measureHuddle)
+  onEdgeVerticalChanged: Qt.callLater(measureHuddle)
+  onBarLayerChanged: {
+    root.lastDrawKey = ""
+    root.drawList = []
+    Qt.callLater(measureHuddle)
+  }
   onBarChanged: {
     injectPanel()
     Qt.callLater(measureHuddle)
   }
   onSettingsChanged: {
     injectPanel()
-    root.lastDrawKey = ""
+    // The cache key already contains appearance settings. Preset names and
+    // saved collections do not require rebuilding the rendering objects.
     Qt.callLater(measureHuddle)
   }
   onChromeChanged: {
@@ -235,10 +214,16 @@ BarWidget {
     Qt.callLater(measureHuddle)
   }
 
+  Connections {
+    target: root.barLayer
+    function onWidthChanged() { Qt.callLater(root.measureHuddle) }
+    function onHeightChanged() { Qt.callLater(root.measureHuddle) }
+  }
+
   Timer {
     id: measureTimer
     interval: 250
-    running: true
+    running: root.chrome
     repeat: true
     onTriggered: root.measureHuddle()
   }
@@ -281,6 +266,7 @@ BarWidget {
     anchors.fill: parent
     visible: root.chrome
     enabled: false
+    clip: true
 
     Repeater {
       model: root.drawList
@@ -307,35 +293,47 @@ BarWidget {
         width: Number(modelData.width) || 0
         height: Number(modelData.height) || 0
 
-        ChromeBox {
+        Loader {
           anchors.fill: parent
-          visible: String(piece.modelData.kind) === "box"
-          edge: String(piece.modelData.pointed ? "ends" : (piece.modelData.border || "none"))
-          glow: piece.modelData.glow === true
-          pointed: piece.modelData.pointed === true
-          vertical: root.edgeVertical
-          roundness: Number(piece.modelData.radius)
-          fillAlpha: piece.fillInk
-          strokeAlpha: piece.strokeInk
-          px: Number(piece.modelData.strokeWidth)
+          sourceComponent: piece.modelData.kind === "power" ? powerRenderer
+            : piece.modelData.kind === "bracket" ? bracketRenderer : boxRenderer
         }
 
-        PowerSeg {
-          anchors.fill: parent
-          visible: String(piece.modelData.kind) === "power"
-          first: piece.modelData.first === true
-          vertical: root.edgeVertical
-          fillAlpha: piece.fillInk
-          strokeAlpha: piece.strokeInk
-          px: Number(piece.modelData.strokeWidth)
+        Component {
+          id: boxRenderer
+          ChromeBox {
+            anchors.fill: parent
+            edge: String(piece.modelData.pointed ? "ends" : (piece.modelData.border || "none"))
+            glow: piece.modelData.glow === true
+            pointed: piece.modelData.pointed === true
+            vertical: root.edgeVertical
+            roundness: Number(piece.modelData.radius)
+            fillAlpha: piece.fillInk
+            strokeAlpha: piece.strokeInk
+            px: Number(piece.modelData.strokeWidth)
+          }
         }
 
-        BracketChrome {
-          anchors.fill: parent
-          visible: String(piece.modelData.kind) === "bracket"
-          fillAlpha: piece.fillInk
-          strokeAlpha: piece.strokeInk
-          px: Number(piece.modelData.strokeWidth)
+        Component {
+          id: powerRenderer
+          PowerSeg {
+            anchors.fill: parent
+            first: piece.modelData.first === true
+            vertical: root.edgeVertical
+            fillAlpha: piece.fillInk
+            strokeAlpha: piece.strokeInk
+            px: Number(piece.modelData.strokeWidth)
+          }
+        }
+
+        Component {
+          id: bracketRenderer
+          BracketChrome {
+            anchors.fill: parent
+            fillAlpha: piece.fillInk
+            strokeAlpha: piece.strokeInk
+            px: Number(piece.modelData.strokeWidth)
+          }
         }
       }
     }
