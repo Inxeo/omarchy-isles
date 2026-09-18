@@ -4,6 +4,37 @@ Breathing islands behind the stock [Omarchy](https://omarchy.org/) bar. The bar 
 
 One chip on the bar opens the panel: looks (cluster, pills, rail, powerline, brackets, glow), stroke style and width, fill vs stroke opacity, padding, and radius.
 
+## What's new in 0.4.0
+
+- Six built-in presets and a dropdown, with **Glowy** as the default for new installs.
+- Save and update personal presets, with **Custom** shown when you fine-tune away from a preset.
+- A scrollable settings panel and sequential settings writes with failure feedback.
+- Fixed idle polling: after layout changes stop, measurement returns from a 50ms burst interval to 250ms. This reduces scheduled idle measurements from about 20 to 4 per second; it is not a measured CPU-usage reduction.
+- Fixed **0% stroke opacity** and **Ends** borders for Pills and Rail.
+
+See [the changelog](CHANGELOG.md) for release and validation notes.
+
+## Presets
+
+Choose a preset from the dropdown at the top of the Isles panel, then fine-tune it with the existing controls.
+
+| Preset | Style |
+|---|---|
+| **Glowy** (new-install default) | Rounded Glow islands, 66% fill, no outline, 1px padding |
+| **Halo** | Rounded cluster islands with a delicate full outline |
+| **Pebbles** | Individual rounded pills with a subtle outline |
+| **Underline** | A translucent full-width rail with a bottom accent |
+| **Arrowhead** | Connected powerline chevrons |
+| **Blueprint** | Lightly filled clusters with crisp corner brackets |
+
+Presets use your current theme's colours. Glowy retains 58% stroke opacity for when you turn its stroke width up; its default width is zero.
+
+To save your own, adjust the controls, enter a name, and click **Save** (or press Enter). Personal presets appear in the same dropdown with a **Saved** label. Enter an existing personal preset's name to **Update** it. Built-in names are reserved. Names can contain up to 40 characters.
+
+The dropdown shows **Custom** when your settings no longer match a preset. Presets save appearance settings; the master islands toggle stays independent. Personal presets are stored in this widget's `savedPresets` setting in `~/.config/omarchy/shell.json`, so they survive shell restarts and plugin updates. Existing explicit appearance settings are preserved.
+
+The panel scrolls when needed on smaller displays. Settings writes are applied sequentially through `omarchy bar set`; the panel reports a failure if a write cannot complete.
+
 ## A nod to Rice Bar
 
 Isles exists because [Rice Bar](https://github.com/jcarcinogen/omarchy-rice-bar) showed that the stock bar could look designed without replacing it. Same rule, same appetite: **own the chrome, not the widgets.**
@@ -104,7 +135,12 @@ Stock widgets are untouched.
 
 - **Inxeo** — design, taste, and the brief
 - **Grok** ([Grok Build](https://x.ai/)) — implementation
+- **OpenAI Codex** — AI-assisted code review, optimisation and bug fixes, presets, regression checks, and documentation
 
 ## License
 
 MIT. Rice Bar remains the original chrome idea; this is a 4.0.3-era way to get a slice of that look.
+
+## Development checks
+
+Run `node tests/presets.cjs` for preset defaults, saving/updating, matching, persistence format, and drawing regression checks. These checks do not modify the running bar.

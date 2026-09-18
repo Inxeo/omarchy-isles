@@ -2,31 +2,40 @@
   "schemaVersion": 1,
   "id": "io.github.inxeo.isles",
   "name": "Isles",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Inxeo",
   "license": "MIT",
   "description": "Breathing islands behind the stock Omarchy bar. Owns the chrome, not the widgets.",
-  "kinds": ["service", "bar-widget"],
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
   "entryPoints": {
     "service": "Service.qml",
     "barWidget": "Widget.qml"
   },
   "barWidget": {
     "displayName": "Isles",
-    "description": "Paint islands behind bar clusters. Click for looks, fill, stroke, and radius.",
+    "description": "Paint islands behind bar clusters. Choose a preset, save your own, or fine-tune the look.",
     "category": "Appearance",
-    "aliases": ["isles", "huddle", "island", "dock", "rice"],
+    "aliases": [
+      "isles",
+      "huddle",
+      "island",
+      "dock",
+      "rice"
+    ],
     "allowMultiple": false,
     "defaultSection": "center",
     "defaults": {
       "chrome": true,
-      "opacity": 62,
-      "strokeOpacity": 100,
-      "padding": 8,
+      "opacity": 66,
+      "strokeOpacity": 58,
+      "padding": 1,
       "radius": 100,
-      "look": "cluster",
-      "border": "all",
-      "strokeWidth": 1
+      "look": "glow",
+      "border": "bottom",
+      "strokeWidth": 0
     },
     "schema": [
       {
@@ -42,7 +51,7 @@
         "min": 0,
         "max": 100,
         "step": 1,
-        "defaultValue": 62
+        "defaultValue": 66
       },
       {
         "key": "strokeOpacity",
@@ -51,7 +60,7 @@
         "min": 0,
         "max": 100,
         "step": 1,
-        "defaultValue": 100
+        "defaultValue": 58
       },
       {
         "key": "padding",
@@ -60,7 +69,7 @@
         "min": 0,
         "max": 20,
         "step": 1,
-        "defaultValue": 8
+        "defaultValue": 1
       },
       {
         "key": "radius",
@@ -75,15 +84,29 @@
         "key": "look",
         "type": "string",
         "label": "Look",
-        "defaultValue": "cluster",
-        "enum": ["cluster", "pills", "rail", "power", "brackets", "glow"]
+        "defaultValue": "glow",
+        "enum": [
+          "cluster",
+          "pills",
+          "rail",
+          "power",
+          "brackets",
+          "glow"
+        ]
       },
       {
         "key": "border",
         "type": "string",
         "label": "Border",
-        "defaultValue": "all",
-        "enum": ["all", "top", "bottom", "horiz", "sides", "ends"]
+        "defaultValue": "bottom",
+        "enum": [
+          "all",
+          "top",
+          "bottom",
+          "horiz",
+          "sides",
+          "ends"
+        ]
       },
       {
         "key": "strokeWidth",
@@ -92,7 +115,7 @@
         "min": 0,
         "max": 5,
         "step": 1,
-        "defaultValue": 1
+        "defaultValue": 0
       }
     ]
   }

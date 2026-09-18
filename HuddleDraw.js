@@ -9,7 +9,9 @@ function build(payload, winW, winH, span, edgeVertical) {
   var border = payload.border
   var radius = payload.radius
   var fillAlpha = Math.max(0, Math.min(1, (Number(payload.opacity) || 0) / 100))
-  var strokeAlpha = Math.max(0, Math.min(1, (Number(payload.strokeOpacity) || 100) / 100))
+  var strokeOpacity = Number(payload.strokeOpacity)
+  if (!isFinite(strokeOpacity)) strokeOpacity = 100
+  var strokeAlpha = Math.max(0, Math.min(1, strokeOpacity / 100))
   var thick = Math.max(0, span - inset * 2)
 
   function boxItem(kind, x, y, w, h, extra) {
@@ -29,7 +31,7 @@ function build(payload, winW, winH, span, edgeVertical) {
         return Math.max(0, Math.min(5, sw))
       })(),
       glow: look === "glow",
-      pointed: false,
+      pointed: kind === "box" && String(border) === "ends",
       first: false
     }
     if (extra) {

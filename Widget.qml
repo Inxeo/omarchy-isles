@@ -201,8 +201,6 @@ BarWidget {
     }
     var key = HuddleState.keyOf(payload)
     if (key === root.lastDrawKey) {
-      if (measureTimer.interval === 50)
-        burstSettle.restart()
       return
     }
     root.lastDrawKey = key

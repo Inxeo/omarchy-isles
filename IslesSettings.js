@@ -7,13 +7,14 @@ function clampInt(n, min, max, fallback) {
 }
 
 function lookOf(raw) {
-  var l = String(raw || "cluster")
-  if (l === "pills" || l === "rail" || l === "power" || l === "brackets" || l === "glow")
+  var l = String(raw || "glow")
+  if (l === "cluster" || l === "pills" || l === "rail" || l === "power" || l === "brackets" || l === "glow")
     return l
-  return "cluster"
+  return "glow"
 }
 
 function borderOf(raw) {
+  if (raw === undefined) return "bottom"
   if (raw === true || raw === "true" || raw === "all") return "all"
   if (raw === "bottom") return "bottom"
   if (raw === "top") return "top"
@@ -28,7 +29,7 @@ function strokeWidthOf(settings) {
   if (isFinite(n) && n >= 0) return clampInt(n, 0, 5, 1)
   var b = settings ? settings.border : undefined
   if (b === false || b === "false" || b === "none") return 0
-  return 1
+  return 0
 }
 
 function fromSettings(settings) {
@@ -40,9 +41,9 @@ function fromSettings(settings) {
     chrome: s.chrome !== false,
     look: look,
     border: border,
-    opacity: clampInt(s.opacity, 0, 100, 62),
-    strokeOpacity: clampInt(s.strokeOpacity, 0, 100, 100),
-    padding: clampInt(s.padding, 0, 20, 8),
+    opacity: clampInt(s.opacity, 0, 100, 66),
+    strokeOpacity: clampInt(s.strokeOpacity, 0, 100, 58),
+    padding: clampInt(s.padding, 0, 20, 1),
     radius: clampInt(s.radius, 0, 100, 100),
     strokeWidth: strokeWidth,
     lookLocksRadius: look === "power" || look === "brackets" || border === "ends",
