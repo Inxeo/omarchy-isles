@@ -16,7 +16,7 @@ function builtins() {
     { name: "Halo", settings: { look: "cluster", border: "all", opacity: 45, strokeOpacity: 80, strokeWidth: 1, padding: 10, radius: 100 } },
     { name: "Pebbles", settings: { look: "pills", border: "all", opacity: 65, strokeOpacity: 45, strokeWidth: 1, padding: 4, radius: 100 } },
     { name: "Underline", settings: { look: "rail", border: "bottom", opacity: 28, strokeOpacity: 85, strokeWidth: 1, padding: 0, radius: 0 } },
-    { name: "Arrowhead", settings: { look: "power", border: "all", opacity: 65, strokeOpacity: 65, strokeWidth: 1, padding: 2, radius: 0 } },
+    { name: "Diamonds", settings: { look: "pills", border: "ends", opacity: 65, strokeOpacity: 45, strokeWidth: 1, padding: 4, radius: 100 } },
     { name: "Blueprint", settings: { look: "brackets", border: "all", opacity: 20, strokeOpacity: 90, strokeWidth: 2, padding: 8, radius: 0 } }
   ]
 }

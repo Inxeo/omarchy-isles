@@ -262,13 +262,13 @@ Panel {
           opacity: root.lookLocksBorder ? 0.4 : 1
           enabled: !root.lookLocksBorder
 
-          FieldLabel { valueText: root.lookLocksBorder ? "Stroke  unused" : "Stroke" }
+          FieldLabel { valueText: root.lookLocksBorder ? "Border Style  unused" : "Border Style" }
 
           ButtonGroup {
             Layout.fillWidth: true
             options: [
               { value: "all", label: "All" },
-              { value: "ends", label: "Ends" }
+              { value: "ends", label: "Pointed" }
             ]
             value: root.borderStyle
             foreground: root.fg
@@ -303,7 +303,7 @@ Panel {
 
           RowLayout {
             Layout.fillWidth: true
-            FieldLabel { valueText: "Fill"; Layout.fillWidth: true }
+            FieldLabel { valueText: "Background Opacity"; Layout.fillWidth: true }
             FieldLabel { valueText: root.opacityPct + "%" }
           }
           PanelSlider {
@@ -324,7 +324,7 @@ Panel {
 
           RowLayout {
             Layout.fillWidth: true
-            FieldLabel { valueText: "Width"; Layout.fillWidth: true }
+            FieldLabel { valueText: "Border Width"; Layout.fillWidth: true }
             FieldLabel { valueText: root.strokeWidthPx + "px" }
           }
           PanelSlider {
@@ -349,7 +349,7 @@ Panel {
             Layout.fillWidth: true
             FieldLabel {
               Layout.fillWidth: true
-              valueText: root.hasDecoration ? "Stroke" : "Stroke  unused"
+              valueText: root.hasDecoration ? "Border Opacity" : "Border Opacity  unused"
             }
             FieldLabel { valueText: root.hasDecoration ? root.strokeOpacityPct + "%" : "" }
           }
@@ -396,7 +396,7 @@ Panel {
             Layout.fillWidth: true
             FieldLabel {
               Layout.fillWidth: true
-              valueText: root.lookLocksRadius ? "Radius  unused" : "Radius"
+              valueText: root.lookLocksRadius ? "Corner Radius  unused" : "Corner Radius"
             }
             FieldLabel {
               valueText: root.lookLocksRadius ? "" : (root.radius <= 0 ? "square" : (root.radius >= 100 ? "pill" : root.radius + "%"))

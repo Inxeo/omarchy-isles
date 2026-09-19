@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.5.0 — unreleased
+## 1.0.0 — 2026-09-19
+
+- Declare Isles as a bar-widget only; remove the unused service entry point.
+- Refresh the README with a quick menu guide, current preset screenshots, and explicit compatibility and settings-access notes.
+- Rename menu sliders to Background Opacity, Border Width, Border Opacity, and Corner Radius, and the decoration selector to Border Style.
+- Rename the Ends menu option to Pointed; retain the existing stored `ends` value for compatibility.
+- Replace the Arrowhead built-in preset with Diamonds, captured from the maintainer’s current pointed Pills appearance (65% background, 45% border, 1px width, 4px padding, radius 100%). Power remains available as a manual Look option.
+
+## 0.5.0 — development milestone (included in 1.0.0)
 
 ### Personal presets
 
@@ -25,7 +33,7 @@
 
 - JavaScript regression checks cover invalid data, lossless updates, cache invalidation, non-crossing outlines, edge bounds, discovery, and recovery planning.
 - Reproducible QML integration checks cover host rejection/exception, disk failure, restoration/retry, concurrent edits, real panel Save/Update actions, renderer selection for all presets in both orientations, metadata-only changes, widget visibility changes, and preset persistence across an isolated process restart.
-- Tests use temporary settings and a mock host API. The maintainer reports successful testing on both screens and acceptance of the Delete action. Deletion is also covered by automated checks, including persistence across restart. One final maintainer review is planned before release; physical hotplug testing remains pending.
+- Tests use temporary settings and a mock host API. The maintainer reports successful testing on both screens and acceptance of the Delete action. Deletion is also covered by automated checks, including persistence across restart. Final maintainer review completed before v1.0; physical hotplug testing remains pending.
 - CPU/GPU improvements have not been benchmarked.
 
 ## 0.4.0

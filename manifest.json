@@ -2,16 +2,14 @@
   "schemaVersion": 1,
   "id": "io.github.inxeo.isles",
   "name": "Isles",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "author": "Inxeo",
   "license": "MIT",
   "description": "Breathing islands behind the stock Omarchy bar. Owns the chrome, not the widgets.",
   "kinds": [
-    "service",
     "bar-widget"
   ],
   "entryPoints": {
-    "service": "Service.qml",
     "barWidget": "Widget.qml"
   },
   "barWidget": {
@@ -47,7 +45,7 @@
       {
         "key": "opacity",
         "type": "integer",
-        "label": "Fill opacity",
+        "label": "Background Opacity",
         "min": 0,
         "max": 100,
         "step": 1,
@@ -56,7 +54,7 @@
       {
         "key": "strokeOpacity",
         "type": "integer",
-        "label": "Stroke opacity",
+        "label": "Border Opacity",
         "min": 0,
         "max": 100,
         "step": 1,
@@ -74,7 +72,7 @@
       {
         "key": "radius",
         "type": "integer",
-        "label": "Corner radius (0 square, 100 pill)",
+        "label": "Corner Radius (0 square, 100 pill)",
         "min": 0,
         "max": 100,
         "step": 1,
@@ -97,7 +95,7 @@
       {
         "key": "border",
         "type": "string",
-        "label": "Border",
+        "label": "Border Style",
         "defaultValue": "bottom",
         "enum": [
           "all",
@@ -111,7 +109,7 @@
       {
         "key": "strokeWidth",
         "type": "integer",
-        "label": "Stroke width",
+        "label": "Border Width",
         "min": 0,
         "max": 5,
         "step": 1,

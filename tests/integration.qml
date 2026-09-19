@@ -20,7 +20,10 @@ Scope {
   property int panelStage: 0
   property var appearanceBeforeDelete: ({})
   property int renderIndex: 0
-  property var renderSettings: Presets.builtins()[0].settings
+  property var renderCases: Presets.builtins().concat([
+    {name: "Power (manual)", settings: {look:"power",border:"all",opacity:65,strokeOpacity:65,strokeWidth:1,padding:2,radius:0}}
+  ])
+  property var renderSettings: renderCases[0].settings
 
   function merged(base, extra) {
     var result = Store.clone(base)
@@ -214,7 +217,7 @@ Scope {
       if (suite.done) { stop(); return }
       widget.measureHuddle(); verticalWidget.measureHuddle()
       if (!suite.check(widget.drawList.length > 0 && verticalWidget.drawList.length > 0,"slot discovery on both screens")) return
-      var preset = Presets.builtins()[suite.renderIndex]
+      var preset = suite.renderCases[suite.renderIndex]
       var expected = preset.settings.look === "power" ? "PowerSeg" : preset.settings.look === "brackets" ? "BracketChrome" : "ChromeBox"
       for (var i=0; i<3; i++) {
         var name=["ChromeBox","PowerSeg","BracketChrome"][i]
@@ -226,7 +229,7 @@ Scope {
       if (!suite.check(String(renderer.fill) !== oldFill,"theme binding for " + preset.name)) return
       console.log("ISLES_PASS: " + preset.name + " loads on both orientations with one renderer per island and live theme colours")
       suite.renderIndex++
-      if (suite.renderIndex >= 6) {
+      if (suite.renderIndex >= suite.renderCases.length) {
         stop()
         var drawing = widget.drawList
         suite.renderSettings = suite.merged(suite.renderSettings, {presetName:"Metadata only", savedPresets:[]})
@@ -242,7 +245,7 @@ Scope {
           console.log("ISLES_PASS: metadata retains renderer; disappearing and returning widgets update geometry")
           finishTimer.start()
         })
-      } else suite.renderSettings = Presets.builtins()[suite.renderIndex].settings
+      } else suite.renderSettings = suite.renderCases[suite.renderIndex].settings
     }
   }
   Timer { id: finishTimer; interval: 250; onTriggered: { console.log("ISLES_INTEGRATION_PASS"); suite.done=true; Qt.quit() } }

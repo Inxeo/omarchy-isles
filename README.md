@@ -1,142 +1,94 @@
 # Isles
 
-Breathing islands behind the stock [Omarchy](https://omarchy.org/) bar. The bar stays Omarchy’s; Isles only paints chrome underneath the widgets.
+Theme-aware islands behind the stock [Omarchy](https://omarchy.org/) bar. They resize as widgets appear and disappear, with six built-in presets and controls for saving your own looks.
 
-One chip on the bar opens the panel: looks (cluster, pills, rail, powerline, brackets, glow), stroke style and width, fill vs stroke opacity, padding, and radius.
-
-## What's new in 0.5.0
-
-This is a stabilisation update with the same six presets and appearance controls.
-
-- Presets apply in one scoped Omarchy settings update, with disk verification and recovery when saving fails.
-- Vertical Ends outlines no longer cross themselves. Geometry caches follow bar size, orientation, fractional dimensions, and surface replacement.
-- Shapes at the screen edge are clipped without being shifted. Only the selected renderer is instantiated for each island.
-- Saving preset metadata does not rebuild the islands; disabling islands stops their measurement timer.
-- Invalid and future-format saved preset records are preserved. They are omitted from the dropdown until supported, and cannot be accidentally overwritten by name.
-- Slot discovery is isolated in a compatibility adapter, with automatic retries and a one-time warning if it cannot find compatible slots.
-
-See [the changelog](CHANGELOG.md) for validation details and remaining release checks.
-
-## What's new in 0.4.0
-
-- Six built-in presets and a dropdown, with **Glowy** as the default for new installs.
-- Save and update personal presets, with **Custom** shown when you fine-tune away from a preset.
-- A scrollable settings panel and sequential settings writes with failure feedback.
-- Fixed idle polling: after layout changes stop, measurement returns from a 50ms burst interval to 250ms. This reduces scheduled idle measurements from about 20 to 4 per second; it is not a measured CPU-usage reduction.
-- Fixed **0% stroke opacity** and **Ends** borders for Pills and Rail.
-
-See [the changelog](CHANGELOG.md) for release and validation notes.
-
-## Presets
-
-Choose a preset from the dropdown at the top of the Isles panel, then fine-tune it with the existing controls.
-
-| Preset | Style |
-|---|---|
-| **Glowy** (new-install default) | Rounded Glow islands, 66% fill, no outline, 1px padding |
-| **Halo** | Rounded cluster islands with a delicate full outline |
-| **Pebbles** | Individual rounded pills with a subtle outline |
-| **Underline** | A translucent full-width rail with a bottom accent |
-| **Arrowhead** | Connected powerline chevrons |
-| **Blueprint** | Lightly filled clusters with crisp corner brackets |
-
-Presets use your current theme's colours. Glowy retains 58% stroke opacity for when you turn its stroke width up; its default width is zero.
-
-To save your own, adjust the controls, enter a name, and click **Save** (or press Enter). Personal presets appear in the same dropdown using exactly the name you entered. Enter an existing personal preset's name to **Update** it. Built-in names are reserved. Names can contain up to 40 characters.
-
-To delete a personal preset, select it in the dropdown and click **Delete**. This removes the saved preset while leaving your current bar appearance in place. The six built-in presets are always available and cannot be deleted.
-
-The dropdown shows **Custom** when your settings no longer match a preset. Presets save appearance settings; the master islands toggle stays independent. Personal presets are stored in this widget's `savedPresets` setting in `~/.config/omarchy/shell.json`, so they survive shell restarts and plugin updates. Existing explicit appearance settings are preserved.
-
-The panel scrolls when needed on smaller displays. Settings are saved together through Omarchy’s scoped `updateEntryInline` API and checked against `shell.json` before success is reported. If persistence cannot be verified, Isles attempts to restore the previous values without overwriting newer edits. An unsupported host reports an error without changing settings.
-
-## A nod to Rice Bar
-
-Isles exists because [Rice Bar](https://github.com/jcarcinogen/omarchy-rice-bar) showed that the stock bar could look designed without replacing it. Same rule, same appetite: **own the chrome, not the widgets.**
-
-Rice Bar did that by talking to the live bar object — slot geometry, transparency, icon colours. That was the right call on Omarchy 4.0.1.
-
-On **4.0.3** the shell stopped injecting that object into third-party widgets. Third-party code gets a postcard (size, edge, colours) and must not mutate the host. Rice Bar’s overlay still maps; it can no longer measure widgets or restyle the bar, so the islands go blank.
-
-Isles keeps that approach on the tested Omarchy release:
-
-- A bar-widget already sits in the shared QML scene. It walks neighbouring slots for size and visibility (the postcard does not include that tape measure).
-- Chrome is drawn **in the bar window, under the widgets**, not as a second layer-shell surface stacked on top.
-- Settings are this plugin’s own keys, saved through its scoped shell API; other plugins and the host bar are not modified.
-
-No fork of `omarchy.bar`. No writing `bar.transparent` or `bar.foreground`.
+**Compatibility:** tested on **Omarchy 4.0.4-1 (Quattro)**. Isles reads the bar’s internal QML layout to measure widgets; future Omarchy changes may require an Isles update. See [how it works](#how-it-works) below.
 
 ## Install
 
 ```bash
 omarchy plugin add https://github.com/Inxeo/omarchy-isles.git --enable
-```
-
-Put the chip where you want it (often the right cluster):
-
-```bash
 omarchy bar move io.github.inxeo.isles --section right
+omarchy bar transparent true
 ```
 
-The bar should be transparent (`omarchy bar transparent true`, or double-click empty bar) so the islands show through.
+New installs start with **Glowy**. Existing appearance settings are preserved.
 
-Tested on **Omarchy 4.0.4-1** (Quattro shell). The plugin isolation this works around landed in 4.0.3. Later releases may change how bar slots are parented; if islands vanish after an update, that walk is the first place to look.
+For the centre island to resize and recenter as a group, set `centerAnchor` to `""` inside the existing `bar` object in `~/.config/omarchy/shell.json`. Preserve the other settings. This is optional and hot-reloads automatically.
 
-## Unlock the clock (recommended)
+## Use the menu
 
-Stock Omarchy pins the clock to the **middle of the screen** (`bar.centerAnchor` is `omarchy.clock`). Isles still paints in that mode, but the center island will not pack and re-center as a group when widgets appear and vanish (Plexamp, hover icons, and so on). The clock stays glued; the huddle cannot breathe as one piece.
+1. Click the **Isles paintbrush icon** on the bar to open the menu.
+2. Choose a **preset** from the dropdown, or adjust **Look** and **Border Style**.
+3. Fine-tune the sliders below. Changes save automatically; the panel reports save failures.
+4. To keep a custom look, enter a name and click **Save** or press Enter. Reuse a personal preset’s name to **Update** it.
+5. Select a personal preset and click **Delete** to remove it. Your current appearance stays in place, and the six built-ins cannot be deleted.
 
-For the intended look — one island per section that grows, shrinks, and stays centered on the cluster — clear the anchor in `~/.config/omarchy/shell.json`:
+The islands toggle turns the decoration on or off. The dropdown shows **Custom** when the current settings do not match a preset. Names support up to 40 characters; built-in names are reserved. Scroll the menu on smaller displays.
 
-```json
-"bar": {
-  "centerAnchor": ""
-}
-```
-
-The file hot-reloads. The clock then sits in the middle of the **center cluster**, not the display. You do not have to do this for Isles to load; you do if you want the breathing dock.
-
-## Left and right bar edges
-
-Isles **does** lay out on left and right: islands follow the strip, pills and powerline stack along it.
-
-What does **not** follow is icon colour. That is Omarchy, not Isles. A transparent bar runs `omarchy-bar-text-color`, which samples the **wallpaper along that edge** and picks the theme’s light text or the dark contrast colour. A bright side of a photo makes glyphs almost black, so they look missing on the islands.
-
-- **Top / bottom** — usually the happy path (theme-light icons on the chrome).
-- **Left / right** — chrome is in the right place; glyphs may go dark. Double-click the bar to make it solid and the light text comes back.
-
-Isles cannot override `bar.foreground` (4.0.3 does not allow that from a third-party widget). Prefer top or bottom if you care about the screenshots below looking like your machine.
-
-## Examples
-
-Settings are what was used for each shot (Look, Stroke, and the sliders that matter). Wallpaper is yours.
-
-| Preview | Settings |
+| Control | Effect |
 |---|---|
-| ![Cluster, All, pill](examples/cluster-all-pill.png) | **Cluster** · Stroke **All** · Radius toward **pill** · Fill high · Stroke width 1–2 |
-| ![Cluster, top and bottom](examples/cluster-tb.png) | **Cluster** · Stroke **T+B** · Radius lower (squarer) · Fill medium |
-| ![Cluster, fill only](examples/cluster-fill-only.png) | **Cluster** · Stroke width **0** (no outline) · Radius pill · Fill medium |
-| ![Cluster, soft fill](examples/cluster-soft-fill.png) | **Cluster** · Stroke **None** / width **0** · Radius pill · Fill a little higher |
-| ![Cluster, All, space](examples/cluster-all-space.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
-| ![Cluster, All, purple](examples/cluster-all-purple.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
-| ![Cluster, Ends](examples/cluster-ends.png) | **Cluster** · Stroke **Ends** (chevrons) · Radius unused · Fill high |
-| ![Cluster, Ends, partial](examples/cluster-ends-partial.png) | **Cluster** · Stroke **Ends** · same as above, fewer widgets in the huddle |
-| ![Cluster, All, green](examples/cluster-all-green.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
-| ![Glow, All](examples/glow-all.png) | **Glow** · Stroke **All** · Radius pill · Fill high (soft bloom around each cluster) |
-| ![Cluster, All, bokeh](examples/cluster-all-bokeh.png) | **Cluster** · Stroke **All** · Radius pill · Fill high |
+| Look | Cluster: one island per section; Pills: individual widget islands; Rail: a full-length strip; Power: chevron segments; Brackets: corner marks; Glow: softly glowing clusters |
+| Border Style | All, Pointed, Top, Bottom, T+B (top and bottom), or Sides; applies to Cluster, Pills, Rail, and Glow |
+| Background Opacity | Transparency of the island background |
+| Border Width | Thickness of the outline; **0** hides it |
+| Border Opacity | Transparency of the outline |
+| Padding | Space around the widgets |
+| Corner Radius | Square to rounded corners where the selected shape supports them |
 
-Stroke **All / Top / Bottom / T+B / Sides / Ends** applies to Cluster, Pills, Rail, and Glow. Width **0** is no stroke. Fill and stroke have separate opacity sliders. Pills, Rail, Power, and Brackets are in the panel too; the shots above are the cluster/glow set.
+Personal presets save appearance settings independently of the islands toggle. They are stored in Isles’ settings in `~/.config/omarchy/shell.json` and survive shell restarts and plugin updates.
 
-## Looks
+## Presets and examples
 
-| Look | What it paints |
-|---|---|
-| Cluster | One island per bar section (left / center / right) |
-| Pills | One island per icon |
-| Rail | One strip the full length of the bar |
-| Power | Chevron segments per icon, grouped by section |
-| Brackets | Corner ticks (optional fill) |
-| Glow | Cluster islands with a soft bloom |
+Colours follow your active theme. These screenshots show the stock bar with Isles across different themes and wallpapers.
+
+### Glowy — default
+
+Softly glowing rounded clusters, with no outline.
+
+![Glowy preset on the Omarchy bar](examples/preset-glowy.png)
+
+### Halo
+
+Rounded clusters with a fine outline.
+
+![Halo preset on the Omarchy bar](examples/preset-halo.png)
+
+### Pebbles
+
+Individual rounded islands around each widget.
+
+![Pebbles preset on the Omarchy bar](examples/preset-pebbles.png)
+
+### Underline
+
+A translucent rail with a bottom accent.
+
+![Underline preset on the Omarchy bar](examples/preset-underline.png)
+
+### Diamonds
+
+Individual pointed islands that show off angular outlines.
+
+![Diamonds preset on the Omarchy bar](examples/preset-diamonds.png)
+
+### Blueprint
+
+Lightly filled clusters with corner brackets.
+
+![Blueprint preset on the Omarchy bar](examples/preset-blueprint.png)
+
+## How it works
+
+Isles runs as a single bar-widget, with a menu loaded by that widget. It reads neighbouring bar slots’ geometry and visibility, then attaches its own drawing item beneath the widgets in the existing bar window. It does not replace the bar or change other widgets’ settings, transparency, or icon colours.
+
+Slot discovery depends on Omarchy’s internal scene structure, rather than a stable public geometry API. Isles retries discovery and logs a warning if compatible slots cannot be found. If the islands disappear after an Omarchy update, this adapter is the first compatibility check.
+
+Settings are written through Omarchy’s scoped API for Isles’ own entry. Isles reads `shell.json` to verify saves and attempts recovery if verification fails, without overwriting conflicting newer edits. Unsupported saved preset records are retained for future compatibility.
+
+The installed plugin runs inside the existing shell process. It makes no network requests, launches no external commands, and requires no elevated privileges. Like other Omarchy QML plugins, it runs with the user’s permissions and is not sandboxed.
+
+Top, bottom, left, and right bars are supported. On transparent bars, Omarchy controls icon contrast using the wallpaper; some theme and wallpaper combinations can make icons difficult to see, particularly on vertical bars. Isles does not override that colour choice.
 
 ## Remove
 
@@ -144,22 +96,27 @@ Stroke **All / Top / Bottom / T+B / Sides / Ends** applies to Cluster, Pills, Ra
 omarchy plugin remove io.github.inxeo.isles --yes
 ```
 
-Stock widgets are untouched.
+The stock widgets remain in place. Any bar transparency or centre-anchor changes you made during setup remain your own settings.
 
-## Contributors
+## Development
 
-- **Inxeo** — design, taste, and the brief
+```bash
+omarchy plugin validate .
+qmllint -I /usr/share/omarchy/shell Widget.qml Panel.qml SettingsWriter.qml
+node tests/presets.cjs
+python3 tests/run-integration.py
+```
+
+The integration suite requires an Omarchy Wayland session. It uses temporary settings, a mock host API, and isolated Quickshell test processes to check the actual QML components, save recovery, preset deletion, rendering, and restart persistence. It does not alter your bar settings.
+
+CPU/GPU savings have not been benchmarked. See [CHANGELOG.md](CHANGELOG.md) for the v1.0 changes and validation history.
+
+## Credits and license
+
+Inspired by [Rice Bar](https://github.com/jcarcinogen/omarchy-rice-bar) and its approach to decorating the stock bar. Omarchy 4.0.3 introduced [“Restrict third-party shell plugin capabilities”](https://github.com/omacom/omarchy/commit/1702cf0bee025aa32eddac391c4f9ac32244cfeb), replacing the live bar object supplied to third-party widgets with a scoped `PluginBarApi`. This removed the direct access to bar internals that Rice Bar’s original approach relied on. Isles brings a similar effect to Omarchy 4.0.4 by measuring neighbouring QML slots and drawing beneath the widgets, as described above.
+
+- **Inxeo** — design, testing, and direction
 - **Grok** ([Grok Build](https://x.ai/)) — implementation
-- **OpenAI Codex** — AI-assisted code review, optimisation and bug fixes, presets, regression checks, and documentation
+- **OpenAI Codex** — AI-assisted development, review, optimisation, tests, and documentation
 
-## License
-
-MIT. Rice Bar remains the original chrome idea; this is a 4.0.3-era and 4.0.4-1 way to get a slice of that look.
-
-## Development checks
-
-Run `node tests/presets.cjs` for settings, presets, geometry, caching, and recovery-planning checks.
-
-Run `python3 tests/run-integration.py` in an Omarchy Wayland session for the actual QML components, including save/update, failure recovery, renderer selection, and persistence across a separate Quickshell process restart. It uses a temporary home and configuration, a mock scoped shell API, and transparent noninteractive test surfaces. It does not alter your bar settings or display configuration.
-
-The automated two-surface test checks independent widget instances on one physical screen; it does not replace real multi-monitor/hotplug testing. Visual acceptance on the target display, small-screen scrolling, and physical fractional-scaling/hotplug checks remain part of the v1.0 release checklist.
+[MIT license](LICENSE).
