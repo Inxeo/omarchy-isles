@@ -87,14 +87,15 @@ function build(payload, winW, winH, span, edgeVertical) {
   }
 
   if (look === "power") {
-    var groups = { left: [], center: [], right: [] }
+    var groups = {}
+    var order = ["left", "centerBegin", "center", "centerEnd", "right"]
     for (var i = 0; i < slots.length; i++) {
       var sl = slots[i]
       var rg = String(sl.region || "center")
+      if (order.indexOf(rg) < 0) continue
       if (!groups[rg]) groups[rg] = []
       groups[rg].push(sl)
     }
-    var order = ["left", "center", "right"]
     for (var g = 0; g < order.length; g++) {
       var list = groups[order[g]] || []
       list.sort(function(a, b) {

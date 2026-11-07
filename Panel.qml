@@ -4,9 +4,11 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "IslesSettings.js" as IslesSettings
 import "Presets.js" as Presets
+import "SettingsStore.js" as Store
 
 Panel {
   id: root
@@ -17,7 +19,8 @@ Panel {
   property var anchorItem: null
   property var hostWidget: null
 
-  readonly property color fg: bar ? bar.foreground : Color.foreground
+  readonly property color fg: bar ? bar.foreground : Commons.Color.foreground
+  readonly property color errorColor: "#a55555"
   readonly property var cfg: IslesSettings.fromSettings(settings)
   readonly property bool chrome: cfg.chrome
   readonly property int opacityPct: cfg.opacity
@@ -38,42 +41,106 @@ Panel {
     var index = Number(selectedPreset)
     return isFinite(index) && index >= Presets.builtins().length ? presets[index] || null : null
   }
-  readonly property var presetOptions: {
-    var options = presets.map(function(p, i) {
-      return { value: String(i), label: p.name }
-    })
-    if (selectedPreset === "custom") options.unshift({ value: "custom", label: "Custom" })
-    return options
+  readonly property var presetOptions: presets.map(function(p, i) {
+    return { value: String(i), label: p.name }
+  })
+  readonly property int contrastFloorPct: {
+    if (!cfg.autoContrast || !hostWidget || !hostWidget.contrastPlan) return 0
+    var n = Math.round(Number(hostWidget.contrastPlan.opacity) * 100)
+    return isFinite(n) ? n : 0
   }
+  readonly property int shownOpacityPct: Math.max(opacityPct, contrastFloorPct)
+  readonly property bool opacityBoosted: cfg.autoContrast && shownOpacityPct > opacityPct
   readonly property bool saving: writer.busy
+  property bool customizeOpen: true
   property string statusMessage: ""
-  function writeSettings(changes, message) {
+  property bool lastFailed: false
+  property var lastChanges: null
+  property string lastSuccessMessage: ""
+  property var undoSnapshot: null
+  property string confirmKind: ""
+  property string confirmName: ""
+
+  function setLive(key, value) {
+    if (hostWidget && hostWidget.setLiveOverride) hostWidget.setLiveOverride(key, value)
+  }
+
+  function writeSettings(changes, message, keepUndo) {
     if (saving) return
+    if (!keepUndo) undoSnapshot = null
     statusMessage = ""
+    lastFailed = false
+    lastChanges = Store.clone(changes)
+    lastSuccessMessage = message || ""
     writer.write(changes, message)
   }
 
   function persist(key, value) {
+    setLive(key, value)
     var changes = {}
     changes[key] = value
     writeSettings(changes, "")
   }
 
-  function applyPreset(value) {
-    if (value === "custom") return
-    var preset = presets[Number(value)]
-    if (preset) {
-      var changes = Presets.snapshot(preset.settings)
-      changes.presetName = preset.name
-      writeSettings(changes, "Applied " + preset.name + ".")
+  function rememberUndo() {
+    undoSnapshot = {
+      values: Presets.snapshot(settings),
+      presetName: settings && settings.presetName ? settings.presetName : ""
     }
+  }
+
+  function applyPreset(value) {
+    if (saving || value === "custom" || value === "") return
+    var preset = presets[Number(value)]
+    if (!preset) return
+    rememberUndo()
+    var changes = Presets.snapshot(preset.settings)
+    changes.presetName = preset.name
+    writeSettings(changes, "Applied " + preset.name + ".", true)
+  }
+
+  function undo() {
+    if (!undoSnapshot || saving) return
+    var snap = undoSnapshot
+    undoSnapshot = null
+    var changes = Presets.snapshot(snap.values)
+    changes.presetName = snap.presetName
+    writeSettings(changes, "Reverted.")
+  }
+
+  function retrySave() {
+    if (saving || !lastChanges) return
+    writeSettings(lastChanges, lastSuccessMessage)
+  }
+
+  function requestSave() {
+    if (saving) return
+    var name = Presets.nameOf(presetName.text)
+    if (!name) return
+    var updating = savedPresets.some(function(p) {
+      return p.name.toLowerCase() === name.toLowerCase()
+    })
+    if (updating) {
+      confirmKind = "update"
+      confirmName = name
+      confirm.opened = true
+      return
+    }
+    savePreset(name)
+  }
+
+  function requestDelete() {
+    if (saving || !selectedPersonalPreset) return
+    confirmKind = "delete"
+    confirmName = selectedPersonalPreset.name
+    confirm.opened = true
   }
 
   function savePreset(name) {
     if (saving) return
     if (name === undefined) name = presetName.text
     var result = Presets.save(settings ? settings.savedPresets : undefined, name, settings)
-    if (result.error) { statusMessage = result.error; return }
+    if (result.error) { statusMessage = result.error; lastFailed = true; return }
     name = Presets.nameOf(name)
     writeSettings({ savedPresets: result.presets, presetName: name }, "Saved " + name + ".")
   }
@@ -82,23 +149,46 @@ Panel {
     if (saving || !selectedPersonalPreset) return
     var name = selectedPersonalPreset.name
     var result = Presets.remove(settings ? settings.savedPresets : undefined, name)
-    if (result.error) { statusMessage = result.error; return }
-    // Remove the saved entry, not the currently applied appearance.
+    if (result.error) { statusMessage = result.error; lastFailed = true; return }
     writeSettings({ savedPresets: result.presets, presetName: "" }, "Deleted " + name + ".")
+  }
+
+  function radiusLabel(n) {
+    n = Math.round(Number(n) || 0)
+    if (n <= 0) return "square"
+    if (n >= 100) return "pill"
+    return n + "%"
+  }
+
+  function opacityLabel(saved, shown) {
+    if (cfg.autoContrast && shown > saved) return saved + "% saved · " + shown + "% shown"
+    return saved + "%"
   }
 
   SettingsWriter {
     id: writer
     shellApi: root.bar ? root.bar.shell : null
     currentSettings: root.settings
-    onCompleted: function(success, message) { root.statusMessage = message }
+    onCompleted: function(success, message) {
+      root.lastFailed = !success
+      root.statusMessage = message
+      if (success) {
+        if (root.hostWidget && root.hostWidget.clearLiveOverride)
+          root.hostWidget.clearLiveOverride(Object.keys(root.lastChanges || {}))
+        if (root.undoSnapshot) successFade.stop()
+        else successFade.restart()
+      } else {
+        successFade.stop()
+      }
+    }
   }
 
-  component Hairline: Rectangle {
-    Layout.fillWidth: true
-    implicitHeight: 1
-    color: root.fg
-    opacity: 0.12
+  Timer {
+    id: successFade
+    interval: 3500
+    onTriggered: {
+      if (!root.lastFailed && !root.undoSnapshot) root.statusMessage = ""
+    }
   }
 
   component FieldLabel: Text {
@@ -108,6 +198,42 @@ Panel {
     font.pixelSize: Style.font.caption
     opacity: 0.7
     text: valueText === "" ? "" : valueText
+    wrapMode: Text.WordWrap
+  }
+
+  component Hint: Text {
+    property string valueText: ""
+    Layout.fillWidth: true
+    text: valueText
+    textFormat: Text.PlainText
+    wrapMode: Text.WordWrap
+    color: root.fg
+    font.family: root.bar ? root.bar.fontFamily : Style.font.family
+    font.pixelSize: Style.font.caption
+    opacity: 0.7
+    visible: valueText !== ""
+  }
+
+  component ChoiceFlow: Flow {
+    id: flow
+    property var options: []
+    property string value: ""
+    signal picked(string value)
+    spacing: Style.space(6)
+    Repeater {
+      model: flow.options
+      Button {
+        required property var modelData
+        text: modelData.label
+        tooltipText: modelData.tooltip || ""
+        selected: modelData.value === flow.value
+        bordered: true
+        foreground: root.fg
+        fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+        fontSize: Style.font.caption
+        onClicked: flow.picked(modelData.value)
+      }
+    }
   }
 
   KeyboardPanel {
@@ -117,46 +243,48 @@ Panel {
     bar: root.bar
     open: root.opened
     contentWidth: Style.space(300)
-    contentHeight: fittedContentHeight(column.implicitHeight + Style.space(12))
+    contentHeight: fittedContentHeight(column.implicitHeight + Style.space(12), Style.space(560))
     padding: Style.space(18)
 
     Flickable {
+      id: flick
       anchors.fill: parent
       contentWidth: width
       contentHeight: column.implicitHeight
       clip: true
       boundsBehavior: Flickable.StopAtBounds
+      flickableDirection: Flickable.VerticalFlick
+      interactive: contentHeight > height
 
       ColumnLayout {
         id: column
         width: parent.width
         spacing: Style.space(12)
-        enabled: !root.saving
 
-        RowLayout {
+        Toggle {
           Layout.fillWidth: true
-          spacing: Style.space(8)
-
-          Text {
-            text: "Isles"
-            color: root.fg
-            font.family: bar ? bar.fontFamily : Style.font.family
-            font.pixelSize: Style.font.body
-            font.bold: true
-            Layout.fillWidth: true
-          }
-
-          ToggleSwitch {
-            checked: root.chrome
-            foreground: root.fg
-            accent: Color.accent
-            onToggled: root.persist("chrome", !root.chrome)
-          }
+          label: "Show islands"
+          description: "Paint islands behind the bar widgets."
+          checked: root.chrome
+          foreground: root.fg
+          fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+          onClicked: root.persist("chrome", !root.chrome)
         }
 
-        Hairline {}
+        PanelSeparator { Layout.fillWidth: true; foreground: root.fg }
 
-        FieldLabel { valueText: "Preset" }
+        PanelSectionHeader {
+          Layout.fillWidth: true
+          text: "Preset"
+          foreground: root.fg
+          fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+        }
+        Hint { valueText: "Presets save the look. Show islands and Auto contrast stay as they are." }
+
+        Hint {
+          visible: root.selectedPreset === "custom"
+          valueText: "Custom — this look is not a saved preset."
+        }
 
         RowLayout {
           Layout.fillWidth: true
@@ -165,11 +293,12 @@ Panel {
             id: presetDropdown
             Layout.fillWidth: true
             Layout.minimumWidth: 0
+            showLabel: false
             options: root.presetOptions
             foreground: root.fg
             fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
-            onChanged: function(v) { root.applyPreset(v) }
-            Binding { target: presetDropdown; property: "value"; value: root.selectedPreset }
+            onChanged: function(v) { if (v !== root.selectedPreset) root.applyPreset(v) }
+            Binding { target: presetDropdown; property: "value"; value: root.selectedPreset === "custom" ? "" : root.selectedPreset }
           }
           Button {
             visible: root.selectedPersonalPreset !== null
@@ -178,7 +307,7 @@ Panel {
             bordered: true
             focusable: true
             foreground: root.fg
-            onClicked: root.deletePreset()
+            onClicked: root.requestDelete()
           }
         }
 
@@ -192,7 +321,7 @@ Panel {
             placeholderText: "Name your preset"
             maximumLength: 40
             foreground: root.fg
-            onAccepted: root.savePreset()
+            onAccepted: root.requestSave()
           }
           Button {
             text: root.savedPresets.some(function(p) {
@@ -202,217 +331,268 @@ Panel {
             focusable: true
             foreground: root.fg
             enabled: Presets.nameOf(presetName.text) !== ""
-            onClicked: root.savePreset()
+            onClicked: root.requestSave()
           }
         }
 
-        Text {
-          Layout.fillWidth: true
-          visible: root.saving || root.statusMessage !== ""
-          text: root.saving ? "Saving…" : root.statusMessage
-          textFormat: Text.PlainText
-          wrapMode: Text.WordWrap
-          color: root.fg
-          font.family: root.bar ? root.bar.fontFamily : Style.font.family
-          font.pixelSize: Style.font.caption
+        Button {
+          visible: root.selectedPreset !== "0"
+          text: "Reset to Glowy"
+          tooltipText: "Restore the default Glowy look. Your saved presets are kept."
+          bordered: true
+          focusable: true
+          foreground: root.fg
+          onClicked: root.applyPreset("0")
         }
 
-        Hairline {}
-
-        FieldLabel { valueText: "Look" }
-
-        ColumnLayout {
+        RowLayout {
           Layout.fillWidth: true
+          visible: root.saving || root.statusMessage !== "" || root.undoSnapshot !== null
           spacing: Style.space(6)
 
-          ButtonGroup {
+          Text {
             Layout.fillWidth: true
-            options: [
-              { value: "cluster", label: "Cluster" },
-              { value: "pills", label: "Pills" },
-              { value: "rail", label: "Rail" }
-            ]
+            text: root.saving ? "Saving…" : root.statusMessage
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            color: root.lastFailed ? root.errorColor : root.fg
+            font.family: root.bar ? root.bar.fontFamily : Style.font.family
+            font.pixelSize: Style.font.caption
+          }
+          Button {
+            visible: root.undoSnapshot !== null && !root.lastFailed && !root.saving
+            text: "Undo"
+            tooltipText: "Restore the previous look"
+            bordered: true
+            foreground: root.fg
+            onClicked: root.undo()
+          }
+          Button {
+            visible: root.lastFailed && root.lastChanges !== null && !root.saving
+            text: "Retry"
+            bordered: true
+            foreground: root.fg
+            onClicked: root.retrySave()
+          }
+        }
+
+        PanelSeparator { Layout.fillWidth: true; foreground: root.fg }
+
+        RowLayout {
+          Layout.fillWidth: true
+          PanelSectionHeader {
+            Layout.fillWidth: true
+            text: "Customize"
+            foreground: root.fg
+            fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+          }
+          Button {
+            text: root.customizeOpen ? "Hide" : "Show"
+            bordered: true
+            foreground: root.fg
+            onClicked: root.customizeOpen = !root.customizeOpen
+          }
+        }
+
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: Style.space(12)
+          visible: root.customizeOpen
+
+          FieldLabel { valueText: "Look" }
+          ChoiceFlow {
+            Layout.fillWidth: true
             value: root.look
-            foreground: root.fg
-            accent: Color.accent
-            fontFamily: bar ? bar.fontFamily : Style.font.family
-            fontSize: Style.font.caption
-            onChanged: function(v) { root.persist("look", v) }
+            options: [
+              { value: "cluster", label: "Cluster", tooltip: "One island per bar section" },
+              { value: "pills", label: "Pills", tooltip: "One island per widget" },
+              { value: "rail", label: "Rail", tooltip: "A strip along the whole bar" },
+              { value: "power", label: "Power", tooltip: "Chevron segments" },
+              { value: "brackets", label: "Brackets", tooltip: "Corner marks around each section" },
+              { value: "glow", label: "Glow", tooltip: "Softly glowing clusters" }
+            ]
+            onPicked: function(v) { root.persist("look", v) }
+          }
+          Hint {
+            valueText: root.look === "cluster" ? "One island per bar section."
+              : root.look === "pills" ? "One island per widget."
+              : root.look === "rail" ? "A strip along the whole bar."
+              : root.look === "power" ? "Chevron segments."
+              : root.look === "brackets" ? "Corner marks around each section."
+              : "Softly glowing clusters."
           }
 
-          ButtonGroup {
+          FieldLabel { valueText: "Border Style"; visible: !root.lookLocksBorder }
+          ChoiceFlow {
             Layout.fillWidth: true
-            options: [
-              { value: "power", label: "Power" },
-              { value: "brackets", label: "Brackets" },
-              { value: "glow", label: "Glow" }
-            ]
-            value: root.look
-            foreground: root.fg
-            accent: Color.accent
-            fontFamily: bar ? bar.fontFamily : Style.font.family
-            fontSize: Style.font.caption
-            onChanged: function(v) { root.persist("look", v) }
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(6)
-          opacity: root.lookLocksBorder ? 0.4 : 1
-          enabled: !root.lookLocksBorder
-
-          FieldLabel { valueText: root.lookLocksBorder ? "Border Style  unused" : "Border Style" }
-
-          ButtonGroup {
-            Layout.fillWidth: true
-            options: [
-              { value: "all", label: "All" },
-              { value: "ends", label: "Pointed" }
-            ]
+            visible: !root.lookLocksBorder
             value: root.borderStyle
-            foreground: root.fg
-            accent: Color.accent
-            fontFamily: bar ? bar.fontFamily : Style.font.family
-            fontSize: Style.font.caption
-            onChanged: function(v) { root.persist("border", v) }
-          }
-
-          ButtonGroup {
-            Layout.fillWidth: true
             options: [
-              { value: "top", label: "Top" },
-              { value: "bottom", label: "Bottom" },
-              { value: "horiz", label: "T+B" },
-              { value: "sides", label: "Sides" }
+              { value: "all", label: "All", tooltip: "Outline every side" },
+              { value: "ends", label: "Pointed", tooltip: "Pointed ends" },
+              { value: "top", label: "Top", tooltip: "Top edge only" },
+              { value: "bottom", label: "Bottom", tooltip: "Bottom edge only" },
+              { value: "horiz", label: "Top+bot", tooltip: "Top and bottom" },
+              { value: "sides", label: "Sides", tooltip: "Left and right" }
             ]
-            value: root.borderStyle
-            foreground: root.fg
-            accent: Color.accent
-            fontFamily: bar ? bar.fontFamily : Style.font.family
-            fontSize: Style.font.caption
-            onChanged: function(v) { root.persist("border", v) }
+            onPicked: function(v) { root.persist("border", v) }
           }
-        }
+          Hint { valueText: root.lookLocksBorder ? "Power and Brackets draw their own outline." : "" }
 
-        Hairline {}
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(4)
-
-          RowLayout {
+          ColumnLayout {
             Layout.fillWidth: true
-            FieldLabel { valueText: "Background Opacity"; Layout.fillWidth: true }
-            FieldLabel { valueText: root.opacityPct + "%" }
-          }
-          PanelSlider {
-            Layout.fillWidth: true
-            bar: root.bar
-            minimum: 0
-            maximum: 100
-            step: 1
-            integer: true
-            value: root.opacityPct
-            onReleased: function(v) { root.persist("opacity", Math.round(v)) }
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(4)
-
-          RowLayout {
-            Layout.fillWidth: true
-            FieldLabel { valueText: "Border Width"; Layout.fillWidth: true }
-            FieldLabel { valueText: root.strokeWidthPx + "px" }
-          }
-          PanelSlider {
-            Layout.fillWidth: true
-            bar: root.bar
-            minimum: 0
-            maximum: 5
-            step: 1
-            integer: true
-            value: root.strokeWidthPx
-            onReleased: function(v) { root.persist("strokeWidth", Math.round(v)) }
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(4)
-          opacity: root.hasDecoration ? 1 : 0.4
-          enabled: root.hasDecoration
-
-          RowLayout {
-            Layout.fillWidth: true
-            FieldLabel {
+            spacing: Style.space(4)
+            RowLayout {
               Layout.fillWidth: true
-              valueText: root.hasDecoration ? "Border Opacity" : "Border Opacity  unused"
+              FieldLabel { valueText: "Padding"; Layout.fillWidth: true }
+              FieldLabel { valueText: (padSlider.dragging ? Math.round(padSlider.liveValue) : root.padding) + "px" }
             }
-            FieldLabel { valueText: root.hasDecoration ? root.strokeOpacityPct + "%" : "" }
-          }
-          PanelSlider {
-            Layout.fillWidth: true
-            bar: root.bar
-            minimum: 0
-            maximum: 100
-            step: 1
-            integer: true
-            value: root.strokeOpacityPct
-            onReleased: function(v) { root.persist("strokeOpacity", Math.round(v)) }
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(4)
-
-          RowLayout {
-            Layout.fillWidth: true
-            FieldLabel { valueText: "Padding"; Layout.fillWidth: true }
-            FieldLabel { valueText: root.padding + "px" }
-          }
-          PanelSlider {
-            Layout.fillWidth: true
-            bar: root.bar
-            minimum: 0
-            maximum: 20
-            step: 1
-            integer: true
-            value: root.padding
-            onReleased: function(v) { root.persist("padding", Math.round(v)) }
-          }
-        }
-
-        ColumnLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(4)
-          opacity: root.lookLocksRadius ? 0.4 : 1
-          enabled: !root.lookLocksRadius
-
-          RowLayout {
-            Layout.fillWidth: true
-            FieldLabel {
+            PanelSlider {
+              id: padSlider
               Layout.fillWidth: true
-              valueText: root.lookLocksRadius ? "Corner Radius  unused" : "Corner Radius"
-            }
-            FieldLabel {
-              valueText: root.lookLocksRadius ? "" : (root.radius <= 0 ? "square" : (root.radius >= 100 ? "pill" : root.radius + "%"))
+              bar: root.bar
+              minimum: 0
+              maximum: 20
+              step: 1
+              integer: true
+              value: root.padding
+              onMoved: function(v) { root.setLive("padding", Math.round(v)) }
+              onReleased: function(v) { root.persist("padding", Math.round(v)) }
             }
           }
-          PanelSlider {
+
+          ColumnLayout {
             Layout.fillWidth: true
-            bar: root.bar
-            minimum: 0
-            maximum: 100
-            step: 1
-            integer: true
-            value: root.radius
-            onReleased: function(v) { root.persist("radius", Math.round(v)) }
+            spacing: Style.space(4)
+            visible: !root.lookLocksRadius
+            RowLayout {
+              Layout.fillWidth: true
+              FieldLabel { valueText: "Corner Radius"; Layout.fillWidth: true }
+              FieldLabel { valueText: root.radiusLabel(radiusSlider.dragging ? radiusSlider.liveValue : root.radius) }
+            }
+            PanelSlider {
+              id: radiusSlider
+              Layout.fillWidth: true
+              bar: root.bar
+              minimum: 0
+              maximum: 100
+              step: 1
+              integer: true
+              value: root.radius
+              onMoved: function(v) { root.setLive("radius", Math.round(v)) }
+              onReleased: function(v) { root.persist("radius", Math.round(v)) }
+            }
+          }
+          Hint { valueText: root.lookLocksRadius ? "Corner radius is not used with Power, Brackets, or Pointed." : "0 square, 100 pill." }
+
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(4)
+            RowLayout {
+              Layout.fillWidth: true
+              FieldLabel { valueText: "Background Opacity"; Layout.fillWidth: true }
+              FieldLabel {
+                valueText: root.opacityLabel(
+                  opacitySlider.dragging ? Math.round(opacitySlider.liveValue) : root.opacityPct,
+                  Math.max(opacitySlider.dragging ? Math.round(opacitySlider.liveValue) : root.opacityPct, root.contrastFloorPct)
+                )
+              }
+            }
+            PanelSlider {
+              id: opacitySlider
+              Layout.fillWidth: true
+              bar: root.bar
+              minimum: 0
+              maximum: 100
+              step: 1
+              integer: true
+              value: root.opacityPct
+              onMoved: function(v) { root.setLive("opacity", Math.round(v)) }
+              onReleased: function(v) { root.persist("opacity", Math.round(v)) }
+            }
+            Hint { valueText: root.opacityBoosted || (root.cfg.autoContrast && opacitySlider.dragging) ? "Auto contrast raises fill for contrast. The slider still stores your saved value." : "" }
+          }
+
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(4)
+            RowLayout {
+              Layout.fillWidth: true
+              FieldLabel { valueText: "Border Width"; Layout.fillWidth: true }
+              FieldLabel { valueText: (widthSlider.dragging ? Math.round(widthSlider.liveValue) : root.strokeWidthPx) + "px" }
+            }
+            PanelSlider {
+              id: widthSlider
+              Layout.fillWidth: true
+              bar: root.bar
+              minimum: 0
+              maximum: 5
+              step: 1
+              integer: true
+              value: root.strokeWidthPx
+              onMoved: function(v) { root.setLive("strokeWidth", Math.round(v)) }
+              onReleased: function(v) { root.persist("strokeWidth", Math.round(v)) }
+            }
+            Hint { valueText: "0 hides the outline." }
+          }
+
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(4)
+            visible: root.hasDecoration
+            RowLayout {
+              Layout.fillWidth: true
+              FieldLabel { valueText: "Border Opacity"; Layout.fillWidth: true }
+              FieldLabel { valueText: (strokeSlider.dragging ? Math.round(strokeSlider.liveValue) : root.strokeOpacityPct) + "%" }
+            }
+            PanelSlider {
+              id: strokeSlider
+              Layout.fillWidth: true
+              bar: root.bar
+              minimum: 0
+              maximum: 100
+              step: 1
+              integer: true
+              value: root.strokeOpacityPct
+              onMoved: function(v) { root.setLive("strokeOpacity", Math.round(v)) }
+              onReleased: function(v) { root.persist("strokeOpacity", Math.round(v)) }
+            }
           }
         }
+
+        PanelSeparator { Layout.fillWidth: true; foreground: root.fg }
+
+        Toggle {
+          Layout.fillWidth: true
+          label: "Auto contrast"
+          description: "Light or dark fill against the bar text. May raise opacity; saved values stay put."
+          checked: root.cfg.autoContrast
+          foreground: root.fg
+          fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+          onClicked: root.persist("autoContrast", !root.cfg.autoContrast)
+        }
+      }
+    }
+
+    ConfirmDialog {
+      id: confirm
+      anchors.fill: parent
+      z: 10
+      message: root.confirmKind === "delete"
+        ? ("Delete \"" + root.confirmName + "\"? The current look stays on the bar.")
+        : ("Replace \"" + root.confirmName + "\" with the current look?")
+      confirmText: root.confirmKind === "delete" ? "Delete" : "Replace"
+      foreground: root.fg
+      fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+      onCanceled: confirm.opened = false
+      onConfirmed: {
+        confirm.opened = false
+        if (root.confirmKind === "delete") root.deletePreset()
+        else if (root.confirmKind === "update") root.savePreset(root.confirmName)
+      }
+      onOpenedChanged: if (confirm.opened) confirm.forceActiveFocus()
+      Keys.onPressed: function(event) {
+        if (confirm.handleKey(event)) event.accepted = true
       }
     }
   }

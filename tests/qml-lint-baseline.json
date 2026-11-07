@@ -1,0 +1,701 @@
+{
+  "reviewed_with": "Qt 6.12.0, Omarchy 4.5.0-3; reasons in LINT.md",
+  "diagnostics": [
+    [
+      "BracketChrome.qml",
+      "unused-imports",
+      "info",
+      "Unused import",
+      "import qs.Ui",
+      1
+    ],
+    [
+      "BracketChrome.qml",
+      "missing-property",
+      "warning",
+      "Member \"background\" not found on type \"QObject\"",
+      "var c = Commons.Color.bar.background",
+      31
+    ],
+    [
+      "ChromeBox.qml",
+      "unused-imports",
+      "info",
+      "Unused import",
+      "import qs.Ui",
+      1
+    ],
+    [
+      "ChromeBox.qml",
+      "missing-property",
+      "warning",
+      "Member \"background\" not found on type \"QObject\"",
+      "var c = Commons.Color.bar.background",
+      31
+    ],
+    [
+      "ChromeBox.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "radius: box.rad + (index + 1) * 4",
+      15
+    ],
+    [
+      "ChromeBox.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "color: Qt.rgba(box.fill.r, box.fill.g, box.fill.b, 0.16 / (index + 1))",
+      22
+    ],
+    [
+      "ChromeBox.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "color: Qt.rgba(box.fill.r, box.fill.g, box.fill.b, 0.16 / (index + 1))",
+      34
+    ],
+    [
+      "ChromeBox.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "color: Qt.rgba(box.fill.r, box.fill.g, box.fill.b, 0.16 / (index + 1))",
+      46
+    ],
+    [
+      "ChromeBox.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "visible: !box.pointed",
+      17
+    ],
+    [
+      "Panel.qml",
+      "unused-imports",
+      "info",
+      "Unused import",
+      "import Quickshell",
+      1
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"foreground\" not found on type \"QObject\"",
+      "readonly property color fg: bar ? bar.foreground : Commons.Color.foreground",
+      41
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"shell\" not found on type \"QObject\"",
+      "shellApi: root.bar ? root.bar.shell : null",
+      35
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      38
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      62
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"caption\" not found on type \"QObject\"",
+      "font.pixelSize: Style.font.caption",
+      32
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      38
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      62
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"caption\" not found on type \"QObject\"",
+      "font.pixelSize: Style.font.caption",
+      32
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      41
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      65
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"caption\" not found on type \"QObject\"",
+      "fontSize: Style.font.caption",
+      30
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      43
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      67
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      43
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      67
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      45
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      69
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      46
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "font.family: root.bar ? root.bar.fontFamily : Style.font.family",
+      70
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"caption\" not found on type \"QObject\"",
+      "font.pixelSize: Style.font.caption",
+      40
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      45
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      69
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      43
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      67
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"fontFamily\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      39
+    ],
+    [
+      "Panel.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "fontFamily: root.bar ? root.bar.fontFamily : Style.font.family",
+      63
+    ],
+    [
+      "PowerSeg.qml",
+      "unused-imports",
+      "info",
+      "Unused import",
+      "import qs.Ui",
+      1
+    ],
+    [
+      "PowerSeg.qml",
+      "missing-property",
+      "warning",
+      "Member \"background\" not found on type \"QObject\"",
+      "var c = Commons.Color.bar.background",
+      31
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var item = slot.activeItem",
+      13
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var itemH = slot.activeItem",
+      13
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "for (var i = 0; i < slots.length; i++) {",
+      14
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var slot = slots[i]",
+      11
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var region = \"\"",
+      11
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var box = boxes[region]",
+      11
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var ink = slotInkSize(slot)",
+      11
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var origin",
+      11
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "for (var r = 0; r < order.length; r++) {",
+      14
+    ],
+    [
+      "Widget.qml",
+      "block-scope-var-declaration",
+      "warning",
+      "var declaration in block scope is hoisted to function scope\nReplace it with const or let to silence the warning\n",
+      "var b = boxes[order[r]]",
+      11
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"barForeground\" not found on type \"QObject\"",
+      "return host && host.barForeground !== undefined ? host.barForeground : Commons.Color.bar.text",
+      25
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"barForeground\" not found on type \"QObject\"",
+      "return host && host.barForeground !== undefined ? host.barForeground : Commons.Color.bar.text",
+      60
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"text\" not found on type \"QObject\"",
+      "return host && host.barForeground !== undefined ? host.barForeground : Commons.Color.bar.text",
+      94
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"vertical\" not found on type \"QObject\"",
+      "readonly property bool edgeVertical: !!(bar && bar.vertical)",
+      54
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"barSize\" not found on type \"QObject\"",
+      "if (bar && Number(bar.barSize) > 0) return Number(bar.barSize)",
+      27
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"barSize\" not found on type \"QObject\"",
+      "if (bar && Number(bar.barSize) > 0) return Number(bar.barSize)",
+      59
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"sizeVertical\" not found on type \"QObject\"",
+      "return edgeVertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal",
+      37
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"sizeHorizontal\" not found on type \"QObject\"",
+      "return edgeVertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal",
+      62
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"contentItem\" not found on type \"QObject\"",
+      "return w && w.contentItem ? w.contentItem : null",
+      19
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"contentItem\" not found on type \"QObject\"",
+      "return w && w.contentItem ? w.contentItem : null",
+      35
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"position\" not found on type \"QObject\"",
+      "try { if (root.bar && root.bar.position) pos = String(root.bar.position) } catch (e) {}",
+      36
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"position\" not found on type \"QObject\"",
+      "try { if (root.bar && root.bar.position) pos = String(root.bar.position) } catch (e) {}",
+      68
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"bar\" not found on type QQuickLoader::item with type QObject",
+      "if (\"bar\" in target) target.bar = root.bar",
+      26
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"settings\" not found on type QQuickLoader::item with type QObject",
+      "if (\"settings\" in target) target.settings = root.settings",
+      31
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"anchorItem\" not found on type QQuickLoader::item with type QObject",
+      "if (\"anchorItem\" in target) target.anchorItem = button",
+      33
+    ],
+    [
+      "Widget.qml",
+      "missing-property",
+      "warning",
+      "Member \"hostWidget\" not found on type QQuickLoader::item with type QObject",
+      "if (\"hostWidget\" in target) target.hostWidget = root",
+      33
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "var row = root.drawList[index]",
+      21
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "return Math.max(isFinite(n) ? n : 0.62, root.contrastPlan.opacity)",
+      51
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "var row = root.drawList[index]",
+      21
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "edge: String(piece.modelData.pointed ? \"ends\" : (piece.modelData.border || \"none\"))",
+      26
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "edge: String(piece.modelData.pointed ? \"ends\" : (piece.modelData.border || \"none\"))",
+      62
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "glow: piece.modelData.glow === true",
+      19
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "pointed: piece.modelData.pointed === true",
+      22
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "vertical: root.edgeVertical",
+      23
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "roundness: Number(piece.modelData.radius)",
+      31
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "contrastBackground: root.contrastBackground",
+      33
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "fillAlpha: piece.fillInk",
+      24
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "strokeAlpha: piece.strokeInk",
+      26
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "px: Number(piece.modelData.strokeWidth)",
+      24
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "first: piece.modelData.first === true",
+      20
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "vertical: root.edgeVertical",
+      23
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "contrastBackground: root.contrastBackground",
+      33
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "fillAlpha: piece.fillInk",
+      24
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "strokeAlpha: piece.strokeInk",
+      26
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "px: Number(piece.modelData.strokeWidth)",
+      24
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "contrastBackground: root.contrastBackground",
+      33
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "fillAlpha: piece.fillInk",
+      24
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "strokeAlpha: piece.strokeInk",
+      26
+    ],
+    [
+      "Widget.qml",
+      "unqualified",
+      "warning",
+      "Unqualified access",
+      "px: Number(piece.modelData.strokeWidth)",
+      24
+    ]
+  ]
+}

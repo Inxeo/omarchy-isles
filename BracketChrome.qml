@@ -1,17 +1,20 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
   id: root
   property real fillAlpha: 0
   property real strokeAlpha: 1
+  property color contrastBackground: "transparent"
   readonly property color fill: {
-    var c = Color.bar.background
-    if (!c || c.a < 0.18) c = Color.background
+    if (contrastBackground.a > 0) return Util.alpha(contrastBackground, fillAlpha)
+    var c = Commons.Color.bar.background
+    if (!c || c.a < 0.18) c = Commons.Color.background
     return Util.alpha(c, fillAlpha)
   }
-  readonly property color stroke: Util.alpha(Color.pick("hyprland.active-border", Color.accent), strokeAlpha)
+  readonly property color stroke: Util.alpha(Commons.Color.pick("hyprland.active-border", Commons.Color.accent), strokeAlpha)
   property int px: 2
   property int arm: Math.max(6, Math.min(14, Math.round(Math.min(width, height) * 0.45)))
   property int thick: Math.max(0, Math.min(5, px))

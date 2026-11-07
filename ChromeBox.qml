@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -15,12 +16,14 @@ Item {
   property real strokeAlpha: 1
   property int px: 1
   readonly property int strokePx: Math.max(0, Math.min(5, px))
+  property color contrastBackground: "transparent"
   readonly property color fill: {
-    var c = Color.bar.background
-    if (!c || c.a < 0.18) c = Color.background
+    if (contrastBackground.a > 0) return Util.alpha(contrastBackground, fillAlpha)
+    var c = Commons.Color.bar.background
+    if (!c || c.a < 0.18) c = Commons.Color.background
     return Util.alpha(c, fillAlpha)
   }
-  readonly property color stroke: Util.alpha(Color.pick("hyprland.active-border", Color.accent), strokeAlpha)
+  readonly property color stroke: Util.alpha(Commons.Color.pick("hyprland.active-border", Commons.Color.accent), strokeAlpha)
   readonly property real tip: Math.min(vertical ? width / 2 : height / 2, Math.min(width, height) / 2)
   readonly property real rad: {
     var t = Number(roundness)

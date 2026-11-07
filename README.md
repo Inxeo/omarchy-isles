@@ -1,8 +1,8 @@
 # Isles
 
-Theme-aware islands behind the stock [Omarchy](https://omarchy.org/) bar. They resize as widgets appear and disappear, with six built-in presets and controls for saving your own looks.
+**Version 1.1.0.** Theme-aware islands behind the stock [Omarchy](https://omarchy.org/) bar. They resize as widgets appear and disappear, with six built-in presets and controls for saving your own looks.
 
-**Compatibility:** tested on **Omarchy 4.0.4-1 (Quattro)**. Isles reads the bar’s internal QML layout to measure widgets; future Omarchy changes may require an Isles update. See [how it works](#how-it-works) below.
+**Compatibility:** tested on **Omarchy 4.5.0-3 (Quattro RS)**. Isles reads the bar’s internal QML layout to measure widgets; future Omarchy changes may require an Isles update. See [how it works](#how-it-works) below.
 
 ## Install
 
@@ -14,29 +14,34 @@ omarchy bar transparent true
 
 New installs start with **Glowy**. Existing appearance settings are preserved.
 
-For the centre island to resize and recenter as a group, set `centerAnchor` to `""` inside the existing `bar` object in `~/.config/omarchy/shell.json`. Preserve the other settings. This is optional and hot-reloads automatically.
+Omarchy 4.5 lays widgets out in five strip sections (`left`, `centerBegin`, `center`, `centerEnd`, `right`). Isles paints one cluster island per occupied section. Widgets in the **tray** drawer are left undecorated. A widget dragged off the bar is skipped, so it does not leave a ghost island. Put a widget beside the clock in `centerBegin` or `centerEnd` rather than in `center`, so the clock stays centred.
 
 ## Use the menu
 
-1. Click the **Isles paintbrush icon** on the bar to open the menu.
-2. Choose a **preset** from the dropdown, or adjust **Look** and **Border Style**.
-3. Fine-tune the sliders below. Changes save automatically; the panel reports save failures.
-4. To keep a custom look, enter a name and click **Save** or press Enter. Reuse a personal preset’s name to **Update** it.
-5. Select a personal preset and click **Delete** to remove it. Your current appearance stays in place, and the six built-ins cannot be deleted.
+1. Click the **paintbrush** on the bar (tooltip: **Island appearance**) to open the menu.
+2. **Show islands** turns painting on or off without changing the saved look.
+3. Choose a **preset**. **Undo** appears after applying one, and **Reset to Glowy** restores the default look.
+4. Open **Customize** to change Look, Border Style, and the sliders. The bar updates while you drag; the value is saved when you release. Hide Customize if you only use presets.
+5. To keep a look, enter a name and click **Save** or press Enter. Reusing a personal preset’s name asks you to confirm **Replace**. **Delete** also asks for confirmation and keeps the current look on the bar.
 
-The islands toggle turns the decoration on or off. The dropdown shows **Custom** when the current settings do not match a preset. Names support up to 40 characters; built-in names are reserved. Scroll the menu on smaller displays.
+A **Custom** note appears when the current look does not match a preset. Names support up to 40 characters; built-in names are reserved. Save failures use a distinct colour and offer **Retry**. Scroll the menu on smaller displays.
+
+**Auto contrast** is optional and off by default. It sits below Customize and is independent of presets: switching looks keeps the toggle as it is. It chooses a light or dark island background against Omarchy’s current bar text colour, using at least 92% opacity for light backgrounds and 85% for dark backgrounds, or more when needed for contrast. The opacity slider still stores your value; when Auto contrast raises fill, the label shows **saved** and **shown** percentages. Turn it off to restore the normal theme background. It targets the main bar text, not individually coloured icons or text outside the filled island area.
 
 | Control | Effect |
 |---|---|
-| Look | Cluster: one island per section; Pills: individual widget islands; Rail: a full-length strip; Power: chevron segments; Brackets: corner marks; Glow: softly glowing clusters |
-| Border Style | All, Pointed, Top, Bottom, T+B (top and bottom), or Sides; applies to Cluster, Pills, Rail, and Glow |
-| Background Opacity | Transparency of the island background |
-| Border Width | Thickness of the outline; **0** hides it |
-| Border Opacity | Transparency of the outline |
+| Show islands | Paint or hide the islands |
+| Preset | Apply a built-in or personal look; Custom means the bar does not match a saved preset |
+| Look | Cluster: one island per strip section; Pills: one island per widget; Rail: a full-length strip along the bar edge; Power: chevron segments; Brackets: corner marks; Glow: softly glowing clusters |
+| Border Style | All, Pointed, Top, Bottom, Top+bot (top and bottom), or Sides; hidden for Power and Brackets, which draw their own outline |
 | Padding | Space around the widgets |
-| Corner Radius | Square to rounded corners where the selected shape supports them |
+| Corner Radius | 0 square, 100 pill; hidden for Power, Brackets, and Pointed |
+| Background Opacity | Saved fill transparency. Auto contrast may show a higher **shown** fill |
+| Border Width | Outline thickness; **0** hides it |
+| Border Opacity | Outline transparency; hidden while width is 0 |
+| Auto contrast | Light or dark fill against bar text; may raise displayed opacity |
 
-Personal presets save appearance settings independently of the islands toggle. They are stored in Isles’ settings in `~/.config/omarchy/shell.json` and survive shell restarts and plugin updates.
+Personal presets save appearance only. Show islands and Auto contrast stay as they are. Presets are stored in Isles’ settings in `~/.config/omarchy/shell.json` and survive shell restarts and plugin updates.
 
 ## Presets and examples
 
@@ -80,7 +85,7 @@ Lightly filled clusters with corner brackets.
 
 ## How it works
 
-Isles runs as a single bar-widget, with a menu loaded by that widget. It reads neighbouring bar slots’ geometry and visibility, then attaches its own drawing item beneath the widgets in the existing bar window. It does not replace the bar or change other widgets’ settings, transparency, or icon colours.
+Isles runs as a single bar-widget, with a menu loaded by that widget. It reads neighbouring bar slots’ geometry and visibility, then draws beneath the widgets on the bar’s current edge. On Omarchy 4.5 the bar window is a full-screen transparent surface; Isles sizes its chrome to that edge so Rail and the other looks follow top, bottom, left, and right bars. It skips tray-drawer slots and any slot that is the active drag source or pending removal, so a widget pulled off the bar does not leave a ghost island. It does not replace the bar or change other widgets’ settings, transparency, or icon colours.
 
 Slot discovery depends on Omarchy’s internal scene structure, rather than a stable public geometry API. Isles retries discovery and logs a warning if compatible slots cannot be found. If the islands disappear after an Omarchy update, this adapter is the first compatibility check.
 
@@ -88,7 +93,7 @@ Settings are written through Omarchy’s scoped API for Isles’ own entry. Isle
 
 The installed plugin runs inside the existing shell process. It makes no network requests, launches no external commands, and requires no elevated privileges. Like other Omarchy QML plugins, it runs with the user’s permissions and is not sandboxed.
 
-Top, bottom, left, and right bars are supported. On transparent bars, Omarchy controls icon contrast using the wallpaper; some theme and wallpaper combinations can make icons difficult to see, particularly on vertical bars. Isles does not override that colour choice.
+Top, bottom, left, and right bars are supported. On transparent bars, Omarchy controls icon contrast using the wallpaper; some theme and wallpaper combinations can make icons difficult to see, particularly on vertical bars. Isles does not override that colour choice; Auto contrast adapts the island background instead.
 
 ## Remove
 
@@ -96,24 +101,26 @@ Top, bottom, left, and right bars are supported. On transparent bars, Omarchy co
 omarchy plugin remove io.github.inxeo.isles --yes
 ```
 
-The stock widgets remain in place. Any bar transparency or centre-anchor changes you made during setup remain your own settings.
+The stock widgets remain in place. Any bar transparency you set during setup remains your own setting.
 
 ## Development
 
 ```bash
 omarchy plugin validate .
-qmllint -I /usr/share/omarchy/shell Widget.qml Panel.qml SettingsWriter.qml
+python3 tests/run-lint.py
 node tests/presets.cjs
 python3 tests/run-integration.py
 ```
 
-The integration suite requires an Omarchy Wayland session. It uses temporary settings, a mock host API, and isolated Quickshell test processes to check the actual QML components, save recovery, preset deletion, rendering, and restart persistence. It does not alter your bar settings.
+The lint runner uses Qt 6 and the installed Omarchy imports, and fails on diagnostics outside an explicitly reviewed baseline. A pass is not warning-free lint; see [the lint notes](tests/LINT.md).
 
-CPU/GPU savings have not been benchmarked. See [CHANGELOG.md](CHANGELOG.md) for the v1.0 changes and validation history.
+The integration suite requires an Omarchy Wayland session. It uses temporary settings, a mock host API, and isolated Quickshell test processes to check the actual QML components, save recovery, preset deletion, undo, live slider preview, rendering, and restart persistence. It does not alter your bar settings.
+
+CPU/GPU savings have not been benchmarked. See [CHANGELOG.md](CHANGELOG.md) for the v1.1 changes and validation history.
 
 ## Credits and license
 
-Inspired by [Rice Bar](https://github.com/jcarcinogen/omarchy-rice-bar) and its approach to decorating the stock bar. Omarchy 4.0.3 introduced [“Restrict third-party shell plugin capabilities”](https://github.com/omacom/omarchy/commit/1702cf0bee025aa32eddac391c4f9ac32244cfeb), replacing the live bar object supplied to third-party widgets with a scoped `PluginBarApi`. This removed the direct access to bar internals that Rice Bar’s original approach relied on. Isles brings a similar effect to Omarchy 4.0.4 by measuring neighbouring QML slots and drawing beneath the widgets, as described above.
+Inspired by [Rice Bar](https://github.com/jcarcinogen/omarchy-rice-bar) and its approach to decorating the stock bar. Omarchy 4.0.3 introduced [“Restrict third-party shell plugin capabilities”](https://github.com/omacom/omarchy/commit/1702cf0bee025aa32eddac391c4f9ac32244cfeb), replacing the live bar object supplied to third-party widgets with a scoped `PluginBarApi`. This removed the direct access to bar internals that Rice Bar’s original approach relied on. Isles brings a similar effect to Omarchy 4.5 by measuring neighbouring QML slots and drawing beneath the widgets, as described above.
 
 - **Inxeo** — design, testing, and direction
 - **Grok** ([Grok Build](https://x.ai/)) — implementation

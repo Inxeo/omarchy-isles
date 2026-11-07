@@ -65,12 +65,12 @@ const widget = fs.readFileSync(path.join(root, 'Widget.qml'), 'utf8');
 const measureStart = widget.indexOf('    var key = HuddleState.keyOf(');
 assert.ok(measureStart >= 0);
 const tail = widget.slice(measureStart, widget.indexOf('\n  function injectPanel()')).replace(/\n  }\s*$/, '');
-const measure = new Function('payload', 'HuddleState', 'root', 'HuddleDraw', 'window', 'span', 'edgeVertical', 'measureTimer', 'burstSettle', tail);
+const measure = new Function('payload', 'HuddleState', 'root', 'HuddleDraw', 'layer', 'span', 'edgeVertical', 'measureTimer', 'burstSettle', tail);
 let now = 0, deadline = null, builds = 0;
 const timer = {interval: 250};
 const widgetState = {lastDrawKey: '', drawList: []};
 function tick(key) {
-  measure(key, {keyOf: value => value}, widgetState, {build: () => {builds++; return [];}}, {contentItem: {width: 1920, height: 32}}, 32, false, timer, {restart: () => {deadline = now + 400;}});
+  measure(key, {keyOf: value => value}, widgetState, {build: () => {builds++; return [];}}, {width: 1920, height: 32}, 32, false, timer, {restart: () => {deadline = now + 400;}});
 }
 tick('initial');
 assert.equal(timer.interval, 50);
@@ -94,7 +94,7 @@ const State = load('HuddleState.js');
 const cacheRoot = {lastDrawKey: '', drawList: []};
 const rail = {...builtins[3].settings, clusters: [], slots: []};
 function measureGeometry(width, height, span, vertical) {
-  measure(rail, State, cacheRoot, Draw, {contentItem: {width, height}}, span, vertical, {interval: 250}, {restart() {}});
+  measure(rail, State, cacheRoot, Draw, {width, height}, span, vertical, {interval: 250}, {restart() {}});
   return cacheRoot.drawList;
 }
 let pieces = measureGeometry(32, 1080, 32, true);
@@ -217,6 +217,57 @@ assert.equal(childrenRead,0,'Discovery must not enter widget internals');
 assert.equal(Geometry.findSurfaceRoot({width:20,height:32,parent:surface},surface,false),surface);
 assert.equal(Geometry.findSurfaceRoot(null,surface,false),null);
 assert.equal(Geometry.slotsIn({get children(){throw Error('destroyed')}}).length,0);
+assert.deepEqual(plain(Geometry.paintedOrder()),['left','centerBegin','center','centerEnd','right']);
+assert.equal(Geometry.isPaintedRegion('centerBegin'),true);
+assert.equal(Geometry.isPaintedRegion('centerEnd'),true);
+assert.equal(Geometry.isPaintedRegion('tray'),false);
+assert.equal(Geometry.isSlot(slot('centerBegin')),true);
+assert.equal(Geometry.isSlot(slot('centerEnd')),true);
+assert.equal(Geometry.isSlot(slot('tray')),false);
+assert.equal(Geometry.isSlot(slot('')),false);
+const dragging=slot('left'); dragging.dragSource=true;
+assert.equal(Geometry.isSlot(dragging),false);
+const pending=slot('right'); pending.removalPending=true;
+assert.equal(Geometry.isSlot(pending),false);
+const traySlot=slot('tray');
+const beginSlot=slot('centerBegin');
+const endSlot=slot('centerEnd');
+const mixed={width:800,height:32,children:[one,beginSlot,endSlot,traySlot,hidden]};
+const mixedFound=Geometry.slotsIn(mixed);
+assert.equal(mixedFound.length,3);
+assert.equal(mixedFound[0],one);
+assert.equal(mixedFound[1],beginSlot);
+assert.equal(mixedFound[2],endSlot);
+const screen={width:1920,height:1080,parent:null};
+const strip={width:1920,height:52,parent:screen,visible:true};
+const nested={width:80,height:32,parent:strip};
+assert.equal(Geometry.findPaintRoot(nested,screen,false,52),strip);
+assert.equal(Geometry.findPaintRoot(nested,strip,false,52),strip);
+assert.equal(Geometry.findPaintRoot(null,strip,false,52),strip);
+screen.children=[strip,{width:400,height:200,visible:true}];
+assert.equal(Geometry.findStripChild(screen,screen.children,1920,1080,false,52),strip);
+assert.equal(Geometry.findStripChild(screen,screen.children,0,1080,false,52),null);
+assert.equal(Geometry.findStripChild(screen,[{width:1920,height:1080,visible:true}],1920,1080,false,52).height,1080);
+const overlay={width:1920,height:52,visible:true,enabled:false,region:'left',moduleName:'overlay',activeItem:{},mapToItem(){}};
+assert.equal(Geometry.findStripChild(screen,[overlay,strip],1920,1080,false,52),strip);
+assert.equal(Geometry.slotsIn({children:[overlay,one]}).length,1);
+const vScreen={width:1920,height:1080,parent:null};
+const vStrip={width:52,height:1080,parent:vScreen};
+const vNested={width:32,height:80,parent:vStrip};
+assert.equal(Geometry.findPaintRoot(vNested,vScreen,true,52),vStrip);
+const railStrip=Draw.build({...builtins[3].settings,look:'rail',clusters:[],slots:[]},1920,52,52,false);
+assert.equal(railStrip[0].width,1920);
+assert.equal(railStrip[0].height,48);
+assert.equal(railStrip[0].y,2);
+const railBottom=Draw.build({...builtins[3].settings,look:'rail',clusters:[],slots:[]},1920,52,52,false);
+assert.deepEqual(plain(railBottom),plain(railStrip));
+const fiveRegions=['left','centerBegin','center','centerEnd','right'].map((region,i)=>({x:i*40,y:0,width:20,height:32,region}));
+const clusterFive=Draw.build({...builtins[1].settings,look:'cluster',padding:0,clusters:fiveRegions,slots:fiveRegions},800,32,32,false);
+assert.equal(clusterFive.length,5);
+const powerFive=Draw.build({look:'power',border:'all',opacity:65,strokeOpacity:65,strokeWidth:1,padding:0,radius:0,clusters:[],slots:fiveRegions.concat([{x:0,y:0,width:20,height:32,region:'tray'}])},800,32,32,false);
+assert.equal(powerFive.length,5);
+const boxes=Geometry.emptyBoxes();
+assert.equal(Object.keys(boxes).join(','),'left,centerBegin,center,centerEnd,right');
 
 const Store=load('SettingsStore.js');
 const original={...changed,savedPresets:[future],extension:{foo:'keep'}};
@@ -252,3 +303,25 @@ assert.ok(Presets.remove(deletionInput,'Future').error);
 assert.ok(Presets.remove([toDelete,toDelete],'Delete me').error);
 assert.ok(Presets.remove({},'Delete me').error);
 console.log('PASS: personal preset deletion preserves other records and protects all six built-ins.');
+
+const Contrast = load('AutoContrast.js');
+assert.equal(Settings.fromSettings({}).autoContrast, false);
+assert.equal(Settings.fromSettings({autoContrast: 'true'}).autoContrast, false);
+assert.equal(Settings.fromSettings({autoContrast: true}).autoContrast, true);
+assert.equal(Object.hasOwn(Presets.snapshot({autoContrast:true}), 'autoContrast'), false);
+assert.equal(Settings.merge({opacity: 40}, {opacity: 70}).opacity, 70);
+assert.equal(Settings.merge({opacity: 40}, {}).opacity, 40);
+assert.equal(Settings.merge({opacity: 40}, null).opacity, 40);
+assert.equal(Settings.merge({look: 'pills', opacity: 40}, {opacity: 12}).look, 'pills');
+for (let r=0;r<=10;r++) for (let g=0;g<=10;g++) for (let b=0;b<=10;b++) {
+  const rgb=[r/10,g/10,b/10], plan=Contrast.plan(...rgb);
+  assert.ok(plan.opacity >= (plan.light ? 0.92 : 0.85) && plan.opacity <= 1);
+  for (const wallpaper of [[0,0,0],[1,1,1],[1,0,1],[0,1,0],[.3,.6,.8]]) {
+    const rendered=wallpaper.map(c=>(plan.light?1:0)*plan.opacity+c*(1-plan.opacity));
+    assert.ok(Contrast.ratio(Contrast.luminance(...rgb),Contrast.luminance(...rendered))>=4.5-1e-6);
+  }
+}
+assert.equal(Contrast.plan(0,0,0).light,true);
+assert.equal(Contrast.plan(1,1,1).light,false);
+assert.equal(Contrast.plan(NaN,0,0).opacity,1);
+console.log('PASS: auto contrast is opt-in, excluded from presets, and meets the contrast target across sampled text/wallpaper colours.');

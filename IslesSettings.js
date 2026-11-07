@@ -1,6 +1,6 @@
 .pragma library
 
-var defaults = {chrome: true, look: "glow", border: "bottom", opacity: 66, strokeOpacity: 58, strokeWidth: 0, padding: 1, radius: 100}
+var defaults = {chrome: true, autoContrast: false, look: "glow", border: "bottom", opacity: 66, strokeOpacity: 58, strokeWidth: 0, padding: 1, radius: 100}
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -41,6 +41,19 @@ function strokeWidthOf(settings) {
   return clampInt(settings && settings.strokeWidth, 0, 5, defaults.strokeWidth)
 }
 
+function merge(settings, override) {
+  if (!isObject(override)) return fromSettings(settings)
+  var merged = {}
+  var s = isObject(settings) ? settings : {}
+  for (var k in s) merged[k] = s[k]
+  var has = false
+  for (var k2 in override) {
+    merged[k2] = override[k2]
+    has = true
+  }
+  return fromSettings(has ? merged : s)
+}
+
 function fromSettings(settings) {
   var s = isObject(settings) ? settings : {}
   var look = lookOf(s.look)
@@ -48,6 +61,7 @@ function fromSettings(settings) {
   var strokeWidth = strokeWidthOf(s)
   return {
     chrome: s.chrome !== false,
+    autoContrast: s.autoContrast === true,
     look: look,
     border: border,
     opacity: clampInt(s.opacity, 0, 100, defaults.opacity),

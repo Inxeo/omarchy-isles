@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Commons as Commons
 import "Isles" as Isles
 import "Isles/Presets.js" as Presets
 import "Isles/SettingsStore.js" as Store
@@ -138,6 +139,25 @@ Scope {
         if (!suite.check(suite.calls === callsBefore && Presets.builtins().length === 6, "built-in deletion was allowed")) return
         console.log("ISLES_PASS: personal preset deletion preserves appearance and built-ins")
         suite.panelStage = 6
+        Qt.callLater(function() { panel.writeSettings({autoContrast: true}, "Contrast enabled") })
+      } else if (suite.panelStage === 6) {
+        if (!suite.check(suite.live.autoContrast === true, "auto contrast toggle did not persist")) return
+        suite.panelStage = 7
+        Qt.callLater(function() { panel.applyPreset("0") })
+      } else if (suite.panelStage === 7) {
+        if (!suite.check(suite.live.autoContrast === true, "preset changed auto contrast toggle")) return
+        console.log("ISLES_PASS: auto contrast persists independently of preset changes")
+        suite.panelStage = 8
+        Qt.callLater(function() { panel.applyPreset("1") })
+      } else if (suite.panelStage === 8) {
+        if (!suite.check(statusMessage === "Applied Halo." && suite.live.look === "cluster", "undo setup: " + statusMessage)) return
+        suite.panelStage = 9
+        Qt.callLater(function() { panel.undo() })
+      } else if (suite.panelStage === 9) {
+        if (!suite.check(statusMessage === "Reverted." && suite.live.look === "glow", "undo did not restore previous look: " + statusMessage)) return
+        if (!suite.check(suite.live.autoContrast === true, "undo changed auto contrast")) return
+        console.log("ISLES_PASS: undo restores the previous look and leaves auto contrast alone")
+        suite.panelStage = 10
         renderTimer.start()
       }
     }
@@ -225,9 +245,21 @@ Scope {
       }
       var renderer = suite.findRenderer(surface.contentItem,expected)
       var oldFill = String(renderer.fill)
-      Color.background = suite.renderIndex % 2 ? "#abcdef" : "#234567"
+      Commons.Color.background = suite.renderIndex % 2 ? "#abcdef" : "#234567"
       if (!suite.check(String(renderer.fill) !== oldFill,"theme binding for " + preset.name)) return
       console.log("ISLES_PASS: " + preset.name + " loads on both orientations with one renderer per island and live theme colours")
+      suite.renderSettings = suite.merged(suite.renderSettings, {autoContrast: true})
+      barApi.barForeground = "black"
+      verticalBar.barForeground = "white"
+      if (!suite.check(renderer.fill.r > 0.99 && renderer.fill.a >= 0.915, "dark text gets light fill: " + preset.name)) return
+      var verticalRenderer = suite.findRenderer(verticalSurface.contentItem, expected)
+      if (!suite.check(verticalRenderer.fill.r < 0.01 && verticalRenderer.fill.a >= 0.845, "independent vertical foreground: " + preset.name)) return
+      barApi.barForeground = "white"
+      if (!suite.check(renderer.fill.r < 0.01, "live foreground changes background: " + preset.name)) return
+      suite.renderSettings = suite.merged(suite.renderSettings, {autoContrast: false})
+      if (!suite.check(String(renderer.fill) !== String(Qt.rgba(0,0,0,renderer.fill.a)), "off restores theme background: " + preset.name)) return
+      if (!suite.check(suite.renderSettings.opacity === preset.settings.opacity, "auto contrast mutated saved opacity")) return
+      console.log("ISLES_PASS: auto contrast on/off and independent live text colours for " + preset.name)
       suite.renderIndex++
       if (suite.renderIndex >= suite.renderCases.length) {
         stop()
@@ -243,6 +275,13 @@ Scope {
           widget.measureHuddle()
           if (!suite.check(widget.drawList.length > 0,"reappearing widget did not recover")) return
           console.log("ISLES_PASS: metadata retains renderer; disappearing and returning widgets update geometry")
+          var savedOpacity = widget.cfg.opacity
+          widget.setLiveOverride("opacity", savedOpacity === 12 ? 13 : 12)
+          if (!suite.check(widget.cfg.opacity !== savedOpacity, "live override did not change painted opacity")) return
+          if (!suite.check(suite.renderSettings.opacity === savedOpacity, "live override mutated saved opacity")) return
+          widget.clearLiveOverride()
+          if (!suite.check(widget.cfg.opacity === savedOpacity, "clearing live override did not restore saved opacity")) return
+          console.log("ISLES_PASS: live slider override previews without writing settings")
           finishTimer.start()
         })
       } else suite.renderSettings = suite.renderCases[suite.renderIndex].settings

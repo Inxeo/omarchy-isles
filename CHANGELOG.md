@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+## 1.1.0 — 2026-11-07
+
+- Target Omarchy 4.5: paint one cluster island per occupied strip section (`left`, `centerBegin`, `center`, `centerEnd`, `right`) and skip widgets in the tray drawer.
+- Place chrome on the bar’s current edge of the full-screen 4.5 window, so Rail and clip follow top, bottom, left, and right.
+- Skip slots that are the active drag source or pending removal, so a widget dragged off the bar does not leave a stuck island.
+- Drop the `centerAnchor` setup step; 4.5 centres the middle box itself. Put widgets beside the clock in `centerBegin` or `centerEnd`.
+- Rebuild the Isles menu around Nielsen-style panel UX: labeled Show islands and Auto contrast toggles, host section headers, a hideable Customize block, one Look picker, and scrolling when the menu is taller than the screen.
+- Preview slider changes on the bar while dragging; write settings when the pointer is released.
+- Show saved vs shown background opacity when Auto contrast raises fill, and hide Look/Border controls that the current shape does not use instead of labelling them unused.
+- Confirm deleting or replacing a personal preset; add Undo after applying a preset, Retry on save failure, Reset to Glowy, and distinct error colouring.
+- Treat Custom as a status for an unsaved look rather than a selectable dropdown item.
+- Qualify theme colour lookups as `Commons.Color` so Qt 6.12’s `Color` value type cannot steal the Omarchy palette.
+- Give Auto contrast light backgrounds a 92% minimum opacity and dark backgrounds an 85% minimum to reduce wallpaper clutter behind small bar glyphs.
+- Add optional Auto contrast, off by default and independent of presets. Adapt island backgrounds to the effective bar text colour and raise rendered opacity without changing saved appearance values.
+- Add a repeatable Qt 6 lint runner with the real Omarchy import layout and an explicit, reviewed diagnostic baseline. New or stale diagnostics fail the check.
+- Qualify panel font references with `root.bar` without changing behaviour.
+
 ## 1.0.0 — 2026-09-19
 
 - Declare Isles as a bar-widget only; remove the unused service entry point.

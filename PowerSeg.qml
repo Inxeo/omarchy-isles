@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // Powerline segment: points right on a horizontal bar, down on a vertical bar.
@@ -11,12 +12,14 @@ Shape {
   property real fillAlpha: 0.62
   property real strokeAlpha: 1
   property int px: 1
+  property color contrastBackground: "transparent"
   readonly property color fill: {
-    var c = Color.bar.background
-    if (!c || c.a < 0.18) c = Color.background
+    if (contrastBackground.a > 0) return Util.alpha(contrastBackground, fillAlpha)
+    var c = Commons.Color.bar.background
+    if (!c || c.a < 0.18) c = Commons.Color.background
     return Util.alpha(c, fillAlpha)
   }
-  readonly property color stroke: Util.alpha(Color.pick("hyprland.active-border", Color.accent), strokeAlpha)
+  readonly property color stroke: Util.alpha(Commons.Color.pick("hyprland.active-border", Commons.Color.accent), strokeAlpha)
   readonly property real tip: vertical
     ? Math.min(width / 2, height / 3)
     : Math.min(height / 2, width / 3)
