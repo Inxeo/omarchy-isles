@@ -157,7 +157,16 @@ Scope {
         if (!suite.check(statusMessage === "Reverted." && suite.live.look === "glow", "undo did not restore previous look: " + statusMessage)) return
         if (!suite.check(suite.live.autoContrast === true, "undo changed auto contrast")) return
         console.log("ISLES_PASS: undo restores the previous look and leaves auto contrast alone")
+        if (!suite.check(String(panel.presetNameInput).indexOf("BoundedNameField") >= 0, "preset name field is BoundedNameField")) return
         suite.panelStage = 10
+        Qt.callLater(function() {
+          panel.presetNameInput.text = "Field save"
+          panel.requestSave()
+        })
+      } else if (suite.panelStage === 10) {
+        if (!suite.check(statusMessage === "Saved Field save.", "save through bounded name field: " + statusMessage)) return
+        console.log("ISLES_PASS: bounded name field text saves a personal preset")
+        suite.panelStage = 11
         renderTimer.start()
       }
     }

@@ -60,6 +60,7 @@ Panel {
   property var undoSnapshot: null
   property string confirmKind: ""
   property string confirmName: ""
+  readonly property alias presetNameInput: presetName
 
   function setLive(key, value) {
     if (hostWidget && hostWidget.setLiveOverride) hostWidget.setLiveOverride(key, value)
@@ -314,7 +315,7 @@ Panel {
         RowLayout {
           Layout.fillWidth: true
           spacing: Style.space(6)
-          TextField {
+          BoundedNameField {
             id: presetName
             Layout.fillWidth: true
             Layout.minimumWidth: 0

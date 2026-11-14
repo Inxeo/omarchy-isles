@@ -2,6 +2,54 @@
   "reviewed_with": "Qt 6.12.0, Omarchy 4.5.0-3; reasons in LINT.md",
   "diagnostics": [
     [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"family\" not found on type \"QObject\"",
+      "font.family: Style.font.family",
+      27
+    ],
+    [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"body\" not found on type \"QObject\"",
+      "font.pixelSize: Style.font.body",
+      30
+    ],
+    [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"controlPaddingX\" not found on type \"QObject\"",
+      "leftPadding: Style.spacing.controlPaddingX + Border.left(borderSpec)",
+      30
+    ],
+    [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"controlPaddingX\" not found on type \"QObject\"",
+      "rightPadding: Style.spacing.controlPaddingX + Border.right(borderSpec)",
+      31
+    ],
+    [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"inputPaddingY\" not found on type \"QObject\"",
+      "topPadding: Style.spacing.inputPaddingY + Border.top(borderSpec)",
+      29
+    ],
+    [
+      "BoundedNameField.qml",
+      "missing-property",
+      "warning",
+      "Member \"inputPaddingY\" not found on type \"QObject\"",
+      "bottomPadding: Style.spacing.inputPaddingY + Border.bottom(borderSpec)",
+      32
+    ],
+    [
       "BracketChrome.qml",
       "unused-imports",
       "info",

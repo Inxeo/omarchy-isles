@@ -1,6 +1,6 @@
 # Isles
 
-**Version 1.1.0.** Theme-aware islands behind the stock [Omarchy](https://omarchy.org/) bar. They resize as widgets appear and disappear, with six built-in presets and controls for saving your own looks.
+**Version 1.1.1.** Theme-aware islands behind the stock [Omarchy](https://omarchy.org/) bar. They resize as widgets appear and disappear, with six built-in presets and controls for saving your own looks.
 
 **Compatibility:** tested on **Omarchy 4.5.0-3 (Quattro RS)**. Isles reads the bar’s internal QML layout to measure widgets; future Omarchy changes may require an Isles update. See [how it works](#how-it-works) below.
 
@@ -91,7 +91,7 @@ Slot discovery depends on Omarchy’s internal scene structure, rather than a st
 
 Settings are written through Omarchy’s scoped API for Isles’ own entry. Isles reads `shell.json` to verify saves and attempts recovery if verification fails, without overwriting conflicting newer edits. Unsupported saved preset records are retained for future compatibility.
 
-The installed plugin runs inside the existing shell process. It makes no network requests, launches no external commands, and requires no elevated privileges. Like other Omarchy QML plugins, it runs with the user’s permissions and is not sandboxed.
+The installed plugin runs inside the existing shell process. It makes no network requests and requires no elevated privileges. Pasting into the preset-name field runs a short-lived `python3` helper that reads at most 160 bytes of text from `wl-paste` with a one-second deadline; typing a name does not launch anything. Like other Omarchy QML plugins, it runs with the user’s permissions and is not sandboxed.
 
 Top, bottom, left, and right bars are supported. On transparent bars, Omarchy controls icon contrast using the wallpaper; some theme and wallpaper combinations can make icons difficult to see, particularly on vertical bars. Isles does not override that colour choice; Auto contrast adapts the island background instead.
 
@@ -109,6 +109,7 @@ The stock widgets remain in place. Any bar transparency you set during setup rem
 omarchy plugin validate .
 python3 tests/run-lint.py
 node tests/presets.cjs
+python3 tests/clipboard_read_test.py
 python3 tests/run-integration.py
 ```
 
@@ -116,7 +117,7 @@ The lint runner uses Qt 6 and the installed Omarchy imports, and fails on diagno
 
 The integration suite requires an Omarchy Wayland session. It uses temporary settings, a mock host API, and isolated Quickshell test processes to check the actual QML components, save recovery, preset deletion, undo, live slider preview, rendering, and restart persistence. It does not alter your bar settings.
 
-CPU/GPU savings have not been benchmarked. See [CHANGELOG.md](CHANGELOG.md) for the v1.1 changes and validation history.
+CPU/GPU savings have not been benchmarked. See [CHANGELOG.md](CHANGELOG.md) for the v1.1.1 changes and validation history.
 
 ## Credits and license
 

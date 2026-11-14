@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.1 — 2026-11-14
+
+- Replace the preset-name `TextField` with a plain-text `TextArea` so Qt 6.12 cannot pull an unbounded Wayland clipboard payload into the shell on clipboard-change.
+- Paste and middle-click in that field go through `clipboard_read.py`: `wl-paste` with a 160-byte cap and a one-second deadline. Native context-menu paste is disabled. Keyboard typing is unchanged.
+
 ## 1.1.0 — 2026-11-07
 
 - Target Omarchy 4.5: paint one cluster island per occupied strip section (`left`, `centerBegin`, `center`, `centerEnd`, `right`) and skip widgets in the tray drawer.
